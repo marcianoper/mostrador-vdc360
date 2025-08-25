@@ -1,159 +1,219 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Mostrador VDC 360°</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
-  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Registro a Mostrador - VDC 360°</title>
   <style>
-    body { font-family: Arial, sans-serif; background: #f4f4f4; padding: 20px; }
-    h2 { color: #0a7a3b; }
-    form, table { background: white; padding: 20px; border-radius: 10px; box-shadow: 0 0 5px #ccc; margin-bottom: 20px; }
-    label { display: block; margin-top: 10px; }
-    input, select, button {
-      padding: 8px; margin-top: 5px; border-radius: 5px; border: 1px solid #ccc; width: 100%;
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      background: #f5f5f5;
+      margin: 0;
+      padding: 20px;
     }
-    button { background-color: #0a7a3b; color: white; border: none; cursor: pointer; margin-top: 15px; }
-    button:hover { background-color: #086331; }
-    table { width: 100%; border-collapse: collapse; }
-    th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
-    th { background-color: #0a7a3b; color: white; }
+    .container {
+      max-width: 800px;
+      margin: auto;
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      box-shadow: 0 0 12px rgba(0,0,0,0.1);
+    }
+    h1 {
+      text-align: center;
+      color: #198754;
+    }
+    input, select, button {
+      width: 100%;
+      padding: 10px;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+      font-size: 1rem;
+    }
+    button {
+      background-color: #198754;
+      color: white;
+      cursor: pointer;
+    }
+    button:hover {
+      background-color: #146c43;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 20px;
+    }
+    th, td {
+      border: 1px solid #ddd;
+      padding: 10px;
+      text-align: center;
+    }
+    th {
+      background-color: #198754;
+      color: white;
+    }
+    .eliminar-btn {
+      background-color: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 10px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .eliminar-btn:hover {
+      background-color: #bb2d3b;
+    }
   </style>
 </head>
 <body>
-  <h2>Registro de Envío a Mostrador – VDC 360°</h2>
-  <form id="form">
-    <label>Fecha: <input type="date" id="fecha" required></label>
-    <label>Producto:
-      <select id="producto">
-        <option value="">-- Seleccionar producto --</option>
-        <option>Bofe</option><option>Corazón</option><option>Hígado</option><option>Lengua de res</option><option>Tripa</option><option>Cuajo</option><option>Panza fresca</option><option>Libro</option><option>Pata blanca</option><option>Pata morena</option><option>Tripa de rastro</option><option>Cabeza de res con lengua</option><option>Cabeza sin lengua</option><option>Teleco</option><option>Caja menudo vísceras</option><option>Menudo National</option><option>Caja de Menudo National</option><option>Caja Excel</option><option>Menudo Canadian</option><option>Cabeza de Rastro</option><option>Sebo</option><option>Tripa Gorda</option><option>Nana</option><option value="personalizado">Otro (personalizado)</option>
-      </select>
-    </label>
-    <div id="campo_personalizado" style="display:none;">
-      <label>Nombre del producto personalizado: <input type="text" id="producto_libre"></label>
-    </div>
-    <label>Kilos: <input type="number" id="kg" step="0.01"></label>
-    <label>Piezas: <input type="number" id="piezas" step="1"></label>
-    <label>Origen:
-      <select id="origen">
-        <option value="">-- Seleccionar origen --</option>
-        <option>Rastro</option><option>Limpieza</option><option>Congelado</option>
-      </select>
-    </label>
-    <label><input type="checkbox" id="es_congelado"> Es congelado</label>
-    <label>Observaciones: <input type="text" id="observaciones"></label>
-    <button type="button" id="agregar">Agregar echada</button>
-    <button type="submit">Guardar todo y generar PDF</button>
-  </form>
-  <table id="tabla">
-    <thead>
-      <tr>
-        <th>Producto</th><th>Kg</th><th>Piezas</th><th>Origen</th><th>Congelado</th><th>Obs</th><th>Eliminar</th>
-      </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+  <div class="container">
+    <h1>Registro de Productos - Mostrador VDC 360° 2</h1>
+
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha">
+
+    <label for="producto">Producto:</label>
+    <select id="producto">
+      <option value="">Selecciona un producto</option>
+      <option>Bofe</option>
+      <option>Corazón</option>
+      <option>Hígado</option>
+      <option>Lengua de res</option>
+      <option>Tripa</option>
+      <option>Cuajo</option>
+      <option>Panza fresca o menudo fresco</option>
+      <option>Libro</option>
+      <option>Pata blanca</option>
+      <option>Pata morena</option>
+      <option>Tripa de rastro</option>
+      <option>Cabeza de res con lengua</option>
+      <option>Cabeza sin lengua</option>
+      <option>Teleco</option>
+      <option>Caja menudo vísceras</option>
+      <option>Menudo National</option>
+      <option>Caja de Menudo National</option>
+      <option>Caja Excel</option>
+      <option>Menudo Canadian</option>
+      <option>Cabeza de Rastro</option>
+      <option>Sebo</option>
+      <option>Tripa Gorda</option>
+      <option>Nana</option>
+      <option>Producto libre personalizado</option>
+    </select>
+
+    <label for="origen">Origen:</label>
+    <input type="text" id="origen" placeholder="Ej. limpieza, rastro, congelado...">
+
+    <label for="kilos">Kilos:</label>
+    <input type="number" id="kilos" step="0.1" placeholder="Ej. 25.5">
+
+    <label for="piezas">Piezas:</label>
+    <input type="number" id="piezas" placeholder="Ej. 10">
+
+    <button onclick="agregarProducto()">Agregar Producto</button>
+    <button onclick="generarDocumento()" style="background-color: navy;">Generar Documento</button>
+
+    <table id="tabla">
+      <thead>
+        <tr>
+          <th># Echada</th>
+          <th>Fecha</th>
+          <th>Producto</th>
+          <th>Origen</th>
+          <th>Kilos</th>
+          <th>Piezas</th>
+          <th>Eliminar</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
   <script>
-    const supabase = supabaseJs.createClient(
-      'https://eqynjddcosvdqjzztznn.supabase.co',
-      'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeW5qZGRjb3N2ZHFqenp0em5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzYwMzIsImV4cCI6MjA3MTcxMjAzMn0.Q51wsGelUvxRfqsMYRY5JduCGyZ7s6AzOhqsRf3kOhk'
-    );
+    let contador = 1;
 
-    let echadas = [];
+    function agregarProducto() {
+      const fecha = document.getElementById('fecha').value;
+      const producto = document.getElementById('producto').value;
+      const origen = document.getElementById('origen').value;
+      const kilos = document.getElementById('kilos').value;
+      const piezas = document.getElementById('piezas').value;
 
-    document.getElementById("producto").addEventListener("change", function () {
-      document.getElementById("campo_personalizado").style.display =
-        this.value === "personalizado" ? "block" : "none";
-    });
+      if (!fecha || !producto) {
+        alert('Por favor, ingresa al menos la fecha y el producto.');
+        return;
+      }
 
-    document.getElementById("agregar").onclick = () => {
-      const fecha = document.getElementById("fecha").value;
-      const productoSel = document.getElementById("producto").value;
-      const producto = productoSel === "personalizado"
-        ? document.getElementById("producto_libre").value.trim()
-        : productoSel;
-      if (!producto || !fecha) return alert("Selecciona producto y fecha");
-      const kg = parseFloat(document.getElementById("kg").value) || null;
-      const piezas = parseInt(document.getElementById("piezas").value) || null;
-      const origen = document.getElementById("origen").value || "No especificado";
-      const es_congelado = document.getElementById("es_congelado").checked;
-      const observaciones = document.getElementById("observaciones").value;
-      echadas.push({ fecha, producto, kg, piezas, origen, es_congelado, observaciones });
-      actualizarTabla();
-      document.getElementById("producto").value = "";
-      document.getElementById("producto_libre").value = "";
-      document.getElementById("kg").value = "";
-      document.getElementById("piezas").value = "";
-      document.getElementById("origen").value = "";
-      document.getElementById("es_congelado").checked = false;
-      document.getElementById("observaciones").value = "";
-      document.getElementById("campo_personalizado").style.display = "none";
-    };
+      const tabla = document.getElementById('tabla').getElementsByTagName('tbody')[0];
+      const fila = tabla.insertRow();
 
-    function actualizarTabla() {
-      const tbody = document.querySelector("#tabla tbody");
-      tbody.innerHTML = "";
-      echadas.forEach((e, i) => {
-        const fila = document.createElement("tr");
-        fila.innerHTML = `
-          <td>${e.producto}</td><td>${e.kg ?? ""}</td><td>${e.piezas ?? ""}</td>
-          <td>${e.origen}</td><td>${e.es_congelado ? "Sí" : "No"}</td><td>${e.observaciones}</td>
-          <td><button onclick="eliminar(${i})">X</button></td>`;
-        tbody.appendChild(fila);
-      });
+      fila.insertCell().innerText = `${contador}a`;
+      fila.insertCell().innerText = fecha;
+      fila.insertCell().innerText = producto;
+      fila.insertCell().innerText = origen || "-";
+      fila.insertCell().innerText = kilos || "-";
+      fila.insertCell().innerText = piezas || "-";
+
+      const celdaEliminar = fila.insertCell();
+      const btn = document.createElement("button");
+      btn.innerText = "❌";
+      btn.className = "eliminar-btn";
+      btn.onclick = function () {
+        tabla.deleteRow(fila.rowIndex - 1);
+        actualizarEchadas();
+      };
+      celdaEliminar.appendChild(btn);
+
+      contador++;
+      limpiarCampos();
     }
 
-    window.eliminar = (i) => {
-      echadas.splice(i, 1);
-      actualizarTabla();
-    };
-
-    async function generarPDF(fecha, echadas) {
-      const { PDFDocument, StandardFonts } = PDFLib;
-      const pdf = await PDFDocument.create();
-      const page = pdf.addPage([600, 800]);
-      const font = await pdf.embedFont(StandardFonts.Helvetica);
-      let y = 760;
-      page.drawText(`Resumen de envío – ${fecha}`, { x: 50, y, size: 12, font });
-      y -= 30;
-      echadas.forEach((e, i) => {
-        const linea = `${i+1}. ${e.producto} - ${e.kg ?? '-'}kg, ${e.piezas ?? '-'} piezas - Origen: ${e.origen}, Congelado: ${e.es_congelado ? 'Sí' : 'No'}${e.observaciones ? ' - ' + e.observaciones : ''}`;
-        page.drawText(linea, { x: 50, y, size: 10, font });
-        y -= 20;
-      });
-      const pdfBytes = await pdf.save();
-      const blob = new Blob([pdfBytes], { type: 'application/pdf' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement("a");
-      link.href = url;
-      link.download = `Resumen_Mostrador_${fecha}.pdf`;
-      link.click();
+    function limpiarCampos() {
+      document.getElementById('producto').value = "";
+      document.getElementById('origen').value = "";
+      document.getElementById('kilos').value = "";
+      document.getElementById('piezas').value = "";
     }
 
-    document.getElementById("form").onsubmit = async (e) => {
-      e.preventDefault();
-      if (!echadas.length) return alert("Agrega al menos una echada");
-      const { error } = await supabase.from("envios_mostrador").insert(
-        echadas.map((e) => ({
-          ...e,
-          hora_registro: new Date().toISOString(),
-        }))
-      );
-      if (error) return alert("Error al guardar en Supabase: " + error.message);
-      const fecha = document.getElementById("fecha").value;
-      await generarPDF(fecha, echadas);
-      let texto = `Resumen de envío - ${fecha}%0A`;
-      echadas.forEach((e, i) => {
-        texto += `${i+1}. ${e.producto} - ${e.kg ?? '-'}kg, ${e.piezas ?? '-'} piezas, ${e.origen}, ${e.es_congelado ? 'Congelado' : 'Fresco'}${e.observaciones ? ' - ' + e.observaciones : ''}%0A`;
-      });
-      window.open(`https://wa.me/?text=${texto}`, "_blank");
-      echadas = [];
-      actualizarTabla();
-      document.getElementById("form").reset();
-    };
+    function actualizarEchadas() {
+      const filas = document.getElementById('tabla').getElementsByTagName('tbody')[0].rows;
+      contador = 1;
+      for (let i = 0; i < filas.length; i++) {
+        filas[i].cells[0].innerText = `${contador}a`;
+        contador++;
+      }
+    }
+
+    function generarDocumento() {
+      const filas = document.getElementById('tabla').getElementsByTagName('tbody')[0].rows;
+      if (filas.length === 0) {
+        alert("No hay productos registrados.");
+        return;
+      }
+
+      let texto = "Echada,Fecha,Producto,Origen,Kilos,Piezas\n";
+
+      for (let i = 0; i < filas.length; i++) {
+        let datos = [];
+        for (let j = 0; j < filas[i].cells.length - 1; j++) {
+          datos.push(filas[i].cells[j].innerText);
+        }
+        texto += datos.join(",") + "\n";
+      }
+
+      const blob = new Blob([texto], { type: "text/csv;charset=utf-8;" });
+      const enlace = document.createElement("a");
+      enlace.href = URL.createObjectURL(blob);
+      enlace.download = "envio_mostrador.csv";
+      enlace.click();
+    }
+
+    window.onload = function () {
+      const hoy = new Date().toISOString().split('T')[0];
+      document.getElementById('fecha').value = hoy;
+    }
   </script>
 </body>
 </html>
-
-
