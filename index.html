@@ -2,23 +2,133 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Registro Mostrador VDC 360°</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    h1 { color: #2e7d32; }
-    .container { background: white; border-radius: 10px; padding: 20px; max-width: 1000px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, select, button { padding: 8px; margin: 5px 0; width: 100%; }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    .container { background: white; padding: 20px; border-radius: 10px; max-width: 900px; margin: auto; box-shadow: 0 0 10px #ccc; }
+    h1 { color: #216c2a; }
+    label { display: block; margin-top: 10px; }
+    input, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; }
+    button { background: #216c2a; color: white; padding: 10px; margin-top: 10px; border: none; width: 100%; border-radius: 5px; cursor: pointer; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #2e7d32; color: white; }
-    .btn { background: #2e7d32; color: white; border: none; cursor: pointer; }
-    .btn:hover { background: #1b5e20; }
-    .btn-danger { background: #c62828; }
-    .btn-danger:hover { background: #b71c1c; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
+    th { background-color: #216c2a; color: white; }
   </style>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
 </head>
 <body>
-<!-- CONTENIDO OMITIDO POR LONGITUD (incluir como en ejecución anterior) -->
+  <div class="container">
+    <h1>Registro Mostrador VDC 360°</h1>
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" />
+
+    <label for="producto">Producto:</label>
+    <select id="producto">
+      <option disabled selected>Selecciona un producto</option>
+      <option>Bofe</option>
+      <option>Corazón</option>
+      <option>Hígado</option>
+      <option>Lengua de res</option>
+      <option>Tripa</option>
+      <option>Cuajo</option>
+      <option>Panza fresca o menudo fresco</option>
+      <option>Libro</option>
+      <option>Pata blanca</option>
+      <option>Pata morena</option>
+      <option>Tripa de rastro</option>
+      <option>Cabeza de res con lengua</option>
+      <option>Cabeza sin lengua</option>
+      <option>Teleco</option>
+      <option>Caja menudo vísceras</option>
+      <option>Menudo National</option>
+      <option>Caja de Menudo National</option>
+      <option>Caja Excel</option>
+      <option>Menudo Canadian</option>
+      <option>Cabeza de Rastro</option>
+      <option>Sebo</option>
+      <option>Tripa Gorda</option>
+      <option>Nana</option>
+      <option>Producto libre personalizado</option>
+    </select>
+
+    <label for="kilos">Kilos:</label>
+    <input type="number" id="kilos" />
+
+    <label for="piezas">Piezas (opcional):</label>
+    <input type="number" id="piezas" />
+
+    <label for="origen">Origen:</label>
+    <input type="text" id="origen" />
+
+    <label for="congelado">¿Es congelado?</label>
+    <select id="congelado">
+      <option>No</option>
+      <option>Sí</option>
+    </select>
+
+    <button onclick="agregarProducto()">Agregar producto</button>
+
+    <h2>Productos enviados</h2>
+    <table id="tabla-productos">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Kilos</th>
+          <th>Piezas</th>
+          <th>Origen</th>
+          <th>Congelado</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <h2>Productos devueltos</h2>
+    <table id="tabla-devueltos">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Kilos</th>
+          <th>Acción</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <button onclick="generarResumenWhatsApp()">Enviar resumen a WhatsApp</button>
+  </div>
+
+  <script>
+    function agregarProducto() {
+      const producto = document.getElementById('producto').value;
+      const kilos = document.getElementById('kilos').value;
+      const piezas = document.getElementById('piezas').value || '';
+      const origen = document.getElementById('origen').value;
+      const congelado = document.getElementById('congelado').value;
+
+      const tabla = document.querySelector('#tabla-productos tbody');
+      const row = document.createElement('tr');
+      row.innerHTML = `<td>${producto}</td><td>${kilos}</td><td>${piezas}</td><td>${origen}</td><td>${congelado}</td><td><button onclick="this.closest('tr').remove()">Eliminar</button></td>`;
+      tabla.appendChild(row);
+    }
+
+    function generarResumenWhatsApp() {
+      const productos = document.querySelectorAll('#tabla-productos tbody tr');
+      const devueltos = document.querySelectorAll('#tabla-devueltos tbody tr');
+      let mensaje = `*Resumen diario - VDC 360°*\n\n`;
+      mensaje += `*Productos enviados:*\n`;
+      productos.forEach(row => {
+        const celdas = row.querySelectorAll('td');
+        mensaje += `- ${celdas[0].innerText}: ${celdas[1].innerText} kg${celdas[2].innerText ? ", " + celdas[2].innerText + " pzas" : ""}, Origen: ${celdas[3].innerText}, Congelado: ${celdas[4].innerText}\n`;
+      });
+      mensaje += `\n*Productos devueltos:*\n`;
+      devueltos.forEach(row => {
+        const celdas = row.querySelectorAll('td');
+        mensaje += `- ${celdas[0].innerText}: ${celdas[1].innerText} kg\n`;
+      });
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, '_blank');
+    }
+  </script>
 </body>
 </html>
