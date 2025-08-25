@@ -1,219 +1,155 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Registro a Mostrador - VDC 360°</title>
+  <meta charset="UTF-8">
+  <title>Registro de Envíos a Mostrador - VDC 360°</title>
   <style>
-    body {
-      font-family: 'Segoe UI', sans-serif;
-      background: #f5f5f5;
-      margin: 0;
-      padding: 20px;
-    }
-    .container {
-      max-width: 800px;
-      margin: auto;
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      box-shadow: 0 0 12px rgba(0,0,0,0.1);
-    }
-    h1 {
-      text-align: center;
-      color: #198754;
-    }
-    input, select, button {
-      width: 100%;
-      padding: 10px;
-      margin-top: 8px;
-      margin-bottom: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-      font-size: 1rem;
-    }
-    button {
-      background-color: #198754;
-      color: white;
-      cursor: pointer;
-    }
-    button:hover {
-      background-color: #146c43;
-    }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 20px;
-    }
-    th, td {
-      border: 1px solid #ddd;
-      padding: 10px;
-      text-align: center;
-    }
-    th {
-      background-color: #198754;
-      color: white;
-    }
-    .eliminar-btn {
-      background-color: #dc3545;
-      color: white;
-      border: none;
-      padding: 6px 10px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .eliminar-btn:hover {
-      background-color: #bb2d3b;
-    }
+    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
+    .bloque { background: white; padding: 20px; margin-bottom: 20px; border-radius: 8px; box-shadow: 0 0 10px #ccc; }
+    input, select { padding: 8px; margin: 5px 0; width: 100%; border: 1px solid #ccc; border-radius: 4px; }
+    button { padding: 10px 20px; background: green; color: white; border: none; border-radius: 4px; cursor: pointer; margin-top: 10px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #999; padding: 8px; text-align: center; }
+    th { background: #e0e0e0; }
+    .resaltado { background-color: #d1f7c4; }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Registro de Productos - Mostrador VDC 360° 2</h1>
-
-    <label for="fecha">Fecha:</label>
+  <div class="bloque">
+    <h2>Registro de productos enviados</h2>
+    <label>Fecha</label>
     <input type="date" id="fecha">
-
-    <label for="producto">Producto:</label>
-    <select id="producto">
-      <option value="">Selecciona un producto</option>
-      <option>Bofe</option>
-      <option>Corazón</option>
-      <option>Hígado</option>
-      <option>Lengua de res</option>
-      <option>Tripa</option>
-      <option>Cuajo</option>
-      <option>Panza fresca o menudo fresco</option>
-      <option>Libro</option>
-      <option>Pata blanca</option>
-      <option>Pata morena</option>
-      <option>Tripa de rastro</option>
-      <option>Cabeza de res con lengua</option>
-      <option>Cabeza sin lengua</option>
-      <option>Teleco</option>
-      <option>Caja menudo vísceras</option>
-      <option>Menudo National</option>
-      <option>Caja de Menudo National</option>
-      <option>Caja Excel</option>
-      <option>Menudo Canadian</option>
-      <option>Cabeza de Rastro</option>
-      <option>Sebo</option>
-      <option>Tripa Gorda</option>
-      <option>Nana</option>
-      <option>Producto libre personalizado</option>
+    <label>Producto</label>
+    <select id="producto"></select>
+    <label>Kilos</label>
+    <input type="number" id="kilos">
+    <label>Piezas (opcional)</label>
+    <input type="number" id="piezas">
+    <label>Origen</label>
+    <select id="origen">
+      <option value="rastro">Rastro</option>
+      <option value="limpieza">Limpieza</option>
+      <option value="congelado">Congelado</option>
     </select>
+    <button onclick="agregarProducto()">Agregar</button>
+  </div>
 
-    <label for="origen">Origen:</label>
-    <input type="text" id="origen" placeholder="Ej. limpieza, rastro, congelado...">
+  <div class="bloque">
+    <h2>Registro de productos devueltos</h2>
+    <label>Producto</label>
+    <select id="productoDevuelto"></select>
+    <label>Kilos devueltos</label>
+    <input type="number" id="kilosDevueltos">
+    <button onclick="agregarDevolucion()">Agregar devolución</button>
+  </div>
 
-    <label for="kilos">Kilos:</label>
-    <input type="number" id="kilos" step="0.1" placeholder="Ej. 25.5">
-
-    <label for="piezas">Piezas:</label>
-    <input type="number" id="piezas" placeholder="Ej. 10">
-
-    <button onclick="agregarProducto()">Agregar Producto</button>
-    <button onclick="generarDocumento()" style="background-color: navy;">Generar Documento</button>
-
-    <table id="tabla">
+  <div class="bloque">
+    <h2>Resumen del Envío</h2>
+    <table id="tablaResumen">
       <thead>
         <tr>
-          <th># Echada</th>
-          <th>Fecha</th>
-          <th>Producto</th>
-          <th>Origen</th>
-          <th>Kilos</th>
-          <th>Piezas</th>
-          <th>Eliminar</th>
+          <th>Producto</th><th>Origen</th><th>Total Kilos</th><th>Piezas</th><th>Devueltos</th><th>Netos</th><th>Eliminar</th>
         </tr>
       </thead>
       <tbody></tbody>
     </table>
+    <button onclick="generarDocumento()">Generar Documento</button>
   </div>
 
   <script>
-    let contador = 1;
+    const productos = [
+      "Bofe", "Corazón", "Hígado", "Lengua de res", "Tripa",
+      "Cuajo", "Panza fresca o menudo fresco", "Libro", "Pata blanca", "Pata morena",
+      "Tripa de rastro", "Cabeza de res con lengua", "Cabeza sin lengua", "Teleco",
+      "Caja menudo vísceras", "Menudo National", "Caja de Menudo National", "Caja Excel",
+      "Menudo Canadian", "Cabeza de Rastro", "Sebo", "Tripa Gorda", "Nana",
+      "Producto libre personalizado"
+    ];
+
+    let registros = [];
+
+    function llenarSelects() {
+      productos.forEach(prod => {
+        const opt1 = document.createElement('option');
+        const opt2 = document.createElement('option');
+        opt1.textContent = opt2.textContent = prod;
+        opt1.value = opt2.value = prod;
+        document.getElementById('producto').appendChild(opt1);
+        document.getElementById('productoDevuelto').appendChild(opt2);
+      });
+    }
 
     function agregarProducto() {
-      const fecha = document.getElementById('fecha').value;
       const producto = document.getElementById('producto').value;
+      const kilos = parseFloat(document.getElementById('kilos').value) || 0;
+      const piezas = parseInt(document.getElementById('piezas').value) || 0;
       const origen = document.getElementById('origen').value;
-      const kilos = document.getElementById('kilos').value;
-      const piezas = document.getElementById('piezas').value;
+      if (!producto || kilos <= 0) return;
 
-      if (!fecha || !producto) {
-        alert('Por favor, ingresa al menos la fecha y el producto.');
-        return;
+      const existe = registros.find(r => r.producto === producto && r.origen === origen);
+      if (existe) {
+        existe.kilos += kilos;
+        existe.piezas += piezas;
+      } else {
+        registros.push({ producto, origen, kilos, piezas, devueltos: 0 });
       }
-
-      const tabla = document.getElementById('tabla').getElementsByTagName('tbody')[0];
-      const fila = tabla.insertRow();
-
-      fila.insertCell().innerText = `${contador}a`;
-      fila.insertCell().innerText = fecha;
-      fila.insertCell().innerText = producto;
-      fila.insertCell().innerText = origen || "-";
-      fila.insertCell().innerText = kilos || "-";
-      fila.insertCell().innerText = piezas || "-";
-
-      const celdaEliminar = fila.insertCell();
-      const btn = document.createElement("button");
-      btn.innerText = "❌";
-      btn.className = "eliminar-btn";
-      btn.onclick = function () {
-        tabla.deleteRow(fila.rowIndex - 1);
-        actualizarEchadas();
-      };
-      celdaEliminar.appendChild(btn);
-
-      contador++;
-      limpiarCampos();
+      document.getElementById('kilos').value = '';
+      document.getElementById('piezas').value = '';
+      actualizarTabla();
     }
 
-    function limpiarCampos() {
-      document.getElementById('producto').value = "";
-      document.getElementById('origen').value = "";
-      document.getElementById('kilos').value = "";
-      document.getElementById('piezas').value = "";
+    function agregarDevolucion() {
+      const producto = document.getElementById('productoDevuelto').value;
+      const kilos = parseFloat(document.getElementById('kilosDevueltos').value) || 0;
+      if (!producto || kilos <= 0) return;
+
+      const existe = registros.find(r => r.producto === producto);
+      if (existe) existe.devueltos += kilos;
+      document.getElementById('kilosDevueltos').value = '';
+      actualizarTabla();
     }
 
-    function actualizarEchadas() {
-      const filas = document.getElementById('tabla').getElementsByTagName('tbody')[0].rows;
-      contador = 1;
-      for (let i = 0; i < filas.length; i++) {
-        filas[i].cells[0].innerText = `${contador}a`;
-        contador++;
-      }
+    function eliminarFila(index) {
+      registros.splice(index, 1);
+      actualizarTabla();
+    }
+
+    function actualizarTabla() {
+      const tbody = document.querySelector('#tablaResumen tbody');
+      tbody.innerHTML = '';
+      registros.forEach((r, i) => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${r.producto}</td>
+          <td>${r.origen}</td>
+          <td>${r.kilos.toFixed(2)}</td>
+          <td>${r.piezas}</td>
+          <td>${r.devueltos.toFixed(2)}</td>
+          <td class="resaltado">${(r.kilos - r.devueltos).toFixed(2)}</td>
+          <td><button onclick="eliminarFila(${i})">Eliminar</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
     }
 
     function generarDocumento() {
-      const filas = document.getElementById('tabla').getElementsByTagName('tbody')[0].rows;
-      if (filas.length === 0) {
-        alert("No hay productos registrados.");
-        return;
-      }
-
-      let texto = "Echada,Fecha,Producto,Origen,Kilos,Piezas\n";
-
-      for (let i = 0; i < filas.length; i++) {
-        let datos = [];
-        for (let j = 0; j < filas[i].cells.length - 1; j++) {
-          datos.push(filas[i].cells[j].innerText);
-        }
-        texto += datos.join(",") + "\n";
-      }
-
-      const blob = new Blob([texto], { type: "text/csv;charset=utf-8;" });
-      const enlace = document.createElement("a");
-      enlace.href = URL.createObjectURL(blob);
-      enlace.download = "envio_mostrador.csv";
-      enlace.click();
+      let texto = `Resumen del día ${document.getElementById('fecha').value}\n\n`;
+      registros.forEach(r => {
+        texto += `${r.producto} (${r.origen}):\n  Kilos enviados: ${r.kilos.toFixed(2)}\n  Devueltos: ${r.devueltos.toFixed(2)}\n  Netos: ${(r.kilos - r.devueltos).toFixed(2)}\n  Piezas: ${r.piezas}\n\n`;
+      });
+      const blob = new Blob([texto], { type: 'text/plain' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `envios_mostrador_${document.getElementById('fecha').value}.txt`;
+      a.click();
     }
 
-    window.onload = function () {
+    window.onload = () => {
+      llenarSelects();
       const hoy = new Date().toISOString().split('T')[0];
       document.getElementById('fecha').value = hoy;
-    }
+    };
   </script>
 </body>
 </html>
