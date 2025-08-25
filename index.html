@@ -229,20 +229,38 @@
     }
 
     function enviarWhatsApp() {
-      const fecha = document.getElementById("fecha").value;
-      let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n*🟢 Enviados:*\n`;
-      enviados.forEach((p) => {
-        mensaje += `• ${p.producto}: ${p.kilos} kg / ${p.piezas} pzas / ${p.origen} / ${p.congelado}\n`;
-      });
-      mensaje += `\n🔴 *Devueltos:*\n`;
-      devueltos.forEach((d) => {
-        mensaje += `• ${d.producto}: ${d.kilos} kg\n`;
-      });
+  const fecha = document.getElementById("fecha").value;
 
-      const numero = ""; // ← puedes cambiarlo por cualquier otro
-      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
+  // Agrupar productos enviados
+  const resumen = {};
+  enviados.forEach((p) => {
+    const key = `${p.producto}|${p.origen}|${p.congelado}`;
+    if (!resumen[key]) {
+      resumen[key] = { kilos: 0, piezas: 0 };
     }
+    resumen[key].kilos += parseFloat(p.kilos);
+    resumen[key].piezas += parseInt(p.piezas || 0);
+  });
+
+  let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n🟢 *Productos enviados:*\n`;
+
+  for (const key in resumen) {
+    const [producto, origen, congelado] = key.split("|");
+    const total = resumen[key];
+    mensaje += `• ${producto}: ${total.kilos} kg / ${total.piezas} pzas / ${origen} / ${congelado}\n`;
+  }
+
+  if (devueltos.length > 0) {
+    mensaje += `\n🔴 *Productos devueltos:*\n`;
+    devueltos.forEach((d) => {
+      mensaje += `• ${d.producto}: ${d.kilos} kg\n`;
+    });
+  }
+
+  const numero = "524621561193"; // tu número o el que desees
+  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+  window.open(url, "_blank");
+}
 
     document.getElementById("fecha").valueAsDate = new Date();
   </script>
