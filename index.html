@@ -1,75 +1,109 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="UTF-8" />
   <title>Registro Mostrador VDC 360°</title>
   <style>
-    body { font-family: sans-serif; background: #f0f0f0; padding: 20px; }
-    .container { background: white; padding: 20px; border-radius: 10px; max-width: 900px; margin: auto; box-shadow: 0 0 10px #ccc; }
-    h1 { color: #216c2a; }
-    label { display: block; margin-top: 10px; }
-    input, select { width: 100%; padding: 8px; margin-top: 4px; border-radius: 4px; border: 1px solid #ccc; }
-    button { background: #216c2a; color: white; padding: 10px; margin-top: 10px; border: none; width: 100%; border-radius: 5px; cursor: pointer; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: center; }
-    th { background-color: #216c2a; color: white; }
+    body {
+      font-family: sans-serif;
+      background: #f2f2f2;
+      padding: 20px;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      max-width: 900px;
+      margin: auto;
+    }
+    h1 {
+      color: green;
+    }
+    label {
+      display: block;
+      margin-top: 15px;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 5px;
+    }
+    button {
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #1f6f26;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      width: 100%;
+      font-weight: bold;
+    }
+    table {
+      width: 100%;
+      margin-top: 20px;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 2px solid #1f6f26;
+      padding: 8px;
+      text-align: center;
+    }
+    th {
+      background-color: #1f6f26;
+      color: white;
+    }
+    .subtitulo {
+      font-size: 22px;
+      font-weight: bold;
+      margin-top: 40px;
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <h1>Registro Mostrador VDC 360°</h1>
-    <label for="fecha">Fecha:</label>
-    <input type="date" id="fecha" />
 
-    <label for="producto">Producto:</label>
-    <select id="producto">
-      <option disabled selected>Selecciona un producto</option>
-      <option>Bofe</option>
-      <option>Corazón</option>
-      <option>Hígado</option>
-      <option>Lengua de res</option>
-      <option>Tripa</option>
-      <option>Cuajo</option>
-      <option>Panza fresca o menudo fresco</option>
-      <option>Libro</option>
-      <option>Pata blanca</option>
-      <option>Pata morena</option>
-      <option>Tripa de rastro</option>
-      <option>Cabeza de res con lengua</option>
-      <option>Cabeza sin lengua</option>
-      <option>Teleco</option>
-      <option>Caja menudo vísceras</option>
-      <option>Menudo National</option>
-      <option>Caja de Menudo National</option>
-      <option>Caja Excel</option>
-      <option>Menudo Canadian</option>
-      <option>Cabeza de Rastro</option>
-      <option>Sebo</option>
-      <option>Tripa Gorda</option>
-      <option>Nana</option>
-      <option>Producto libre personalizado</option>
-    </select>
+    <label>Fecha:
+      <input type="date" id="fecha" value="">
+    </label>
 
-    <label for="kilos">Kilos:</label>
-    <input type="number" id="kilos" />
+    <label>Producto:
+      <select id="producto">
+        <option value="">Seleccionar</option>
+        <option value="Caja menudo vísceras">Caja menudo vísceras</option>
+        <option value="Caja Menudo National">Caja Menudo National</option>
+        <option value="Menudo National">Menudo National</option>
+        <option value="Caja Excel">Caja Excel</option>
+        <option value="Menudo Canadian">Menudo Canadian</option>
+        <option value="Caja Washington">Caja Washington</option>
+        <option value="Producto Libre">Producto Libre</option>
+      </select>
+    </label>
 
-    <label for="piezas">Piezas (opcional):</label>
-    <input type="number" id="piezas" />
+    <label>Kilos:
+      <input type="number" id="kilos" />
+    </label>
 
-    <label for="origen">Origen:</label>
-    <input type="text" id="origen" />
+    <label>Piezas (opcional):
+      <input type="number" id="piezas" />
+    </label>
 
-    <label for="congelado">¿Es congelado?</label>
-    <select id="congelado">
-      <option>No</option>
-      <option>Sí</option>
-    </select>
+    <label>Origen:
+      <input type="text" id="origen" />
+    </label>
+
+    <label>¿Es congelado?
+      <select id="congelado">
+        <option value="No">No</option>
+        <option value="Sí">Sí</option>
+      </select>
+    </label>
 
     <button onclick="agregarProducto()">Agregar producto</button>
 
-    <h2>Productos enviados</h2>
-    <table id="tabla-productos">
+    <h2 class="subtitulo">Productos enviados</h2>
+    <table id="tablaEnviados">
       <thead>
         <tr>
           <th>Producto</th>
@@ -83,8 +117,18 @@
       <tbody></tbody>
     </table>
 
-    <h2>Productos devueltos</h2>
-    <table id="tabla-devueltos">
+    <h2 class="subtitulo">Productos devueltos</h2>
+    <label>Producto devuelto:
+      <input type="text" id="productoDevuelto" />
+    </label>
+
+    <label>Kilos devueltos:
+      <input type="number" id="kilosDevuelto" />
+    </label>
+
+    <button onclick="agregarDevuelto()">Agregar producto devuelto</button>
+
+    <table id="tablaDevueltos">
       <thead>
         <tr>
           <th>Producto</th>
@@ -95,40 +139,98 @@
       <tbody></tbody>
     </table>
 
-    <button onclick="generarResumenWhatsApp()">Enviar resumen a WhatsApp</button>
+    <button onclick="enviarWhatsApp()">Enviar resumen a WhatsApp</button>
   </div>
 
   <script>
+    const enviados = [];
+    const devueltos = [];
+
     function agregarProducto() {
       const producto = document.getElementById('producto').value;
       const kilos = document.getElementById('kilos').value;
-      const piezas = document.getElementById('piezas').value || '';
+      const piezas = document.getElementById('piezas').value || 0;
       const origen = document.getElementById('origen').value;
       const congelado = document.getElementById('congelado').value;
 
-      const tabla = document.querySelector('#tabla-productos tbody');
-      const row = document.createElement('tr');
-      row.innerHTML = `<td>${producto}</td><td>${kilos}</td><td>${piezas}</td><td>${origen}</td><td>${congelado}</td><td><button onclick="this.closest('tr').remove()">Eliminar</button></td>`;
-      tabla.appendChild(row);
+      if (!producto || !kilos || !origen) {
+        alert("Por favor completa los campos obligatorios.");
+        return;
+      }
+
+      enviados.push({ producto, kilos, piezas, origen, congelado });
+      renderTablaEnviados();
     }
 
-    function generarResumenWhatsApp() {
-      const productos = document.querySelectorAll('#tabla-productos tbody tr');
-      const devueltos = document.querySelectorAll('#tabla-devueltos tbody tr');
-      let mensaje = `*Resumen diario - VDC 360°*\n\n`;
-      mensaje += `*Productos enviados:*\n`;
-      productos.forEach(row => {
-        const celdas = row.querySelectorAll('td');
-        mensaje += `- ${celdas[0].innerText}: ${celdas[1].innerText} kg${celdas[2].innerText ? ", " + celdas[2].innerText + " pzas" : ""}, Origen: ${celdas[3].innerText}, Congelado: ${celdas[4].innerText}\n`;
-      });
-      mensaje += `\n*Productos devueltos:*\n`;
-      devueltos.forEach(row => {
-        const celdas = row.querySelectorAll('td');
-        mensaje += `- ${celdas[0].innerText}: ${celdas[1].innerText} kg\n`;
-      });
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, '_blank');
+    function agregarDevuelto() {
+      const producto = document.getElementById('productoDevuelto').value;
+      const kilos = document.getElementById('kilosDevuelto').value;
+
+      if (!producto || !kilos) {
+        alert("Completa ambos campos del producto devuelto.");
+        return;
+      }
+
+      devueltos.push({ producto, kilos });
+      renderTablaDevueltos();
     }
+
+    function eliminarProducto(index) {
+      enviados.splice(index, 1);
+      renderTablaEnviados();
+    }
+
+    function eliminarDevuelto(index) {
+      devueltos.splice(index, 1);
+      renderTablaDevueltos();
+    }
+
+    function renderTablaEnviados() {
+      const tbody = document.querySelector("#tablaEnviados tbody");
+      tbody.innerHTML = "";
+      enviados.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.producto}</td>
+            <td>${item.kilos}</td>
+            <td>${item.piezas}</td>
+            <td>${item.origen}</td>
+            <td>${item.congelado}</td>
+            <td><button onclick="eliminarProducto(${index})">Eliminar</button></td>
+          </tr>`;
+      });
+    }
+
+    function renderTablaDevueltos() {
+      const tbody = document.querySelector("#tablaDevueltos tbody");
+      tbody.innerHTML = "";
+      devueltos.forEach((item, index) => {
+        tbody.innerHTML += `
+          <tr>
+            <td>${item.producto}</td>
+            <td>${item.kilos}</td>
+            <td><button onclick="eliminarDevuelto(${index})">Eliminar</button></td>
+          </tr>`;
+      });
+    }
+
+    function enviarWhatsApp() {
+      const fecha = document.getElementById("fecha").value;
+      let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n*🟢 Enviados:*\n`;
+      enviados.forEach((p) => {
+        mensaje += `• ${p.producto}: ${p.kilos} kg / ${p.piezas} pzas / ${p.origen} / ${p.congelado}\n`;
+      });
+      mensaje += `\n🔴 *Devueltos:*\n`;
+      devueltos.forEach((d) => {
+        mensaje += `• ${d.producto}: ${d.kilos} kg\n`;
+      });
+
+      const numero = ""; // ← puedes cambiarlo por cualquier otro
+      const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
+    }
+
+    document.getElementById("fecha").valueAsDate = new Date();
   </script>
 </body>
 </html>
