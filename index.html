@@ -1,206 +1,137 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>Registro Mostrador VDC 360°</title>
+  <meta charset="UTF-8" />
+  <title>Registro de Envíos a Mostrador</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-    h1 { color: #2e7d32; }
-    .container { background: white; border-radius: 10px; padding: 20px; max-width: 1000px; margin: auto; box-shadow: 0 0 10px rgba(0,0,0,0.1); }
-    input, select, button { padding: 8px; margin: 5px 0; width: 100%; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-    th { background-color: #2e7d32; color: white; }
-    .btn { background: #2e7d32; color: white; border: none; cursor: pointer; }
-    .btn:hover { background: #1b5e20; }
-    .btn-danger { background: #c62828; }
-    .btn-danger:hover { background: #b71c1c; }
+    body {
+      font-family: sans-serif;
+      background: #f0f0f0;
+      padding: 20px;
+    }
+    .formulario {
+      background: white;
+      border-radius: 8px;
+      padding: 20px;
+      max-width: 500px;
+      margin: auto;
+      box-shadow: 0 0 10px #ccc;
+    }
+    label {
+      display: block;
+      margin-top: 10px;
+    }
+    input, select {
+      padding: 8px;
+      width: 100%;
+      margin-top: 4px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+    }
+    button {
+      background: green;
+      color: white;
+      padding: 10px;
+      margin-top: 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .mensaje {
+      margin-top: 15px;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <h1>Registro Mostrador VDC 360°</h1>
-    <label>Fecha:</label>
-    <input type="date" id="fecha" value="">
-    <label>Producto:</label>
+  <div class="formulario">
+    <h2>Registro de Envíos a Mostrador</h2>
+    
+    <label for="fecha">Fecha:</label>
+    <input type="date" id="fecha" />
+
+    <label for="producto">Producto:</label>
     <select id="producto">
-      <option value="">Selecciona producto</option>
-      <option>Bofe</option>
-      <option>Corazón</option>
-      <option>Hígado</option>
-      <option>Lengua de res</option>
-      <option>Tripa</option>
-      <option>Cuajo</option>
-      <option>Panza fresca o menudo fresco</option>
-      <option>Libro</option>
-      <option>Pata blanca</option>
-      <option>Pata morena</option>
-      <option>Tripa de rastro</option>
-      <option>Cabeza de res con lengua</option>
-      <option>Cabeza sin lengua</option>
-      <option>Teleco</option>
-      <option>Caja menudo vísceras</option>
-      <option>Menudo National</option>
-      <option>Caja de Menudo National</option>
-      <option>Caja Excel</option>
-      <option>Menudo Canadian</option>
-      <option>Cabeza de Rastro</option>
-      <option>Sebo</option>
-      <option>Tripa Gorda</option>
-      <option>Nana</option>
-      <option>Washington</option>
-      <option>Otro</option>
+      <option value="Bofe">Bofe</option>
+      <option value="Corazón">Corazón</option>
+      <option value="Hígado">Hígado</option>
+      <option value="Lengua de res">Lengua de res</option>
+      <option value="Tripa">Tripa</option>
+      <option value="Cuajo">Cuajo</option>
+      <option value="Panza fresca">Panza fresca</option>
+      <option value="Libro">Libro</option>
+      <option value="Pata blanca">Pata blanca</option>
+      <option value="Pata morena">Pata morena</option>
+      <option value="Tripa de rastro">Tripa de rastro</option>
+      <option value="Cabeza con lengua">Cabeza con lengua</option>
+      <option value="Cabeza sin lengua">Cabeza sin lengua</option>
+      <option value="Teleco">Teleco</option>
+      <option value="Caja menudo vísceras">Caja menudo vísceras</option>
+      <option value="Menudo National">Menudo National</option>
+      <option value="Caja de Menudo National">Caja de Menudo National</option>
+      <option value="Caja Excel">Caja Excel</option>
+      <option value="Menudo Canadian">Menudo Canadian</option>
+      <option value="Cabeza de Rastro">Cabeza de Rastro</option>
+      <option value="Sebo">Sebo</option>
+      <option value="Tripa Gorda">Tripa Gorda</option>
+      <option value="Nana">Nana</option>
+      <option value="Washington">Washington</option>
+      <option value="Producto personalizado">Producto personalizado</option>
     </select>
-    <label>Kilos:</label>
-    <input type="number" id="kilos">
-    <label>Piezas (opcional):</label>
-    <input type="number" id="piezas">
-    <label>Origen:</label>
-    <input type="text" id="origen">
-    <label>¿Es congelado?</label>
-    <select id="congelado">
-      <option value="No">No</option>
-      <option value="Sí">Sí</option>
-    </select>
-    <button class="btn" onclick="agregarProducto()">Agregar producto</button>
-    <h3>Productos enviados</h3>
-    <table id="tabla">
-      <thead>
-        <tr>
-          <th>Producto</th><th>Kilos</th><th>Piezas</th><th>Origen</th><th>Congelado</th><th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <h3>Productos devueltos</h3>
-    <label>Producto devuelto:</label>
-    <select id="productoDevuelto">
-      <option value="">Selecciona producto</option>
-      <option>Bofe</option>
-      <option>Corazón</option>
-      <option>Hígado</option>
-      <option>Lengua de res</option>
-      <option>Tripa</option>
-      <option>Cuajo</option>
-      <option>Panza fresca o menudo fresco</option>
-      <option>Libro</option>
-      <option>Pata blanca</option>
-      <option>Pata morena</option>
-      <option>Tripa de rastro</option>
-      <option>Cabeza de res con lengua</option>
-      <option>Cabeza sin lengua</option>
-      <option>Teleco</option>
-      <option>Caja menudo vísceras</option>
-      <option>Menudo National</option>
-      <option>Caja de Menudo National</option>
-      <option>Caja Excel</option>
-      <option>Menudo Canadian</option>
-      <option>Cabeza de Rastro</option>
-      <option>Sebo</option>
-      <option>Tripa Gorda</option>
-      <option>Nana</option>
-      <option>Washington</option>
-      <option>Otro</option>
-    </select>
-    <label>Kilos devueltos:</label>
-    <input type="number" id="kilosDevueltos">
-    <button class="btn" onclick="agregarDevolucion()">Agregar devolución</button>
-    <table id="tablaDevueltos">
-      <thead>
-        <tr>
-          <th>Producto</th><th>Kilos Devueltos</th><th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-    <button class="btn" onclick="generarDocumento()">Generar documento final</button>
+
+    <label for="kilos">Kilos enviados:</label>
+    <input type="number" id="kilos" step="0.01" />
+
+    <label for="piezas">Piezas enviadas:</label>
+    <input type="number" id="piezas" />
+
+    <label for="origen">Origen:</label>
+    <input type="text" id="origen" placeholder="rastro, limpieza, congelado..." />
+
+    <label for="tipo">Tipo:</label>
+    <input type="text" id="tipo" placeholder="echada 1, 2, 3..." />
+
+    <button onclick="guardarDatos()">Guardar envío</button>
+
+    <div class="mensaje" id="mensaje"></div>
   </div>
-<script>
-let productos = [];
-let devoluciones = [];
 
-function agregarProducto() {
-  const prod = document.getElementById('producto').value;
-  const kg = parseFloat(document.getElementById('kilos').value) || 0;
-  const piezas = parseInt(document.getElementById('piezas').value) || 0;
-  const origen = document.getElementById('origen').value;
-  const congelado = document.getElementById('congelado').value;
-  if (!prod || kg === 0) return;
-  const existente = productos.find(p => p.producto === prod);
-  if (existente) {
-    existente.kilos += kg;
-    existente.piezas += piezas;
-  } else {
-    productos.push({ producto: prod, kilos: kg, piezas, origen, congelado });
-  }
-  actualizarTabla();
-  document.getElementById('producto').value = "";
-  document.getElementById('kilos').value = "";
-  document.getElementById('piezas').value = "";
-  document.getElementById('origen').value = "";
-  document.getElementById('congelado').value = "No";
-}
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js"></script>
+  <script>
+    const supabaseUrl = 'https://eqynjddcosvdqjzztznn.supabase.co';
+    const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeW5qZGRjb3N2ZHFqenp0em5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzYwMzIsImV4cCI6MjA3MTcxMjAzMn0.Q51wsGelUvxRfqsMYRY5JduCGyZ7s6AzOhqsRf3kOhk';
+    const supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
-function eliminarProducto(index) {
-  productos.splice(index, 1);
-  actualizarTabla();
-}
+    async function guardarDatos() {
+      const fecha = document.getElementById('fecha').value;
+      const producto = document.getElementById('producto').value;
+      const kilos = parseFloat(document.getElementById('kilos').value);
+      const piezas = parseInt(document.getElementById('piezas').value);
+      const origen = document.getElementById('origen').value;
+      const tipo = document.getElementById('tipo').value;
+      const timestamp = new Date().toISOString();
 
-function actualizarTabla() {
-  const cuerpo = document.querySelector('#tabla tbody');
-  cuerpo.innerHTML = "";
-  productos.forEach((p, i) => {
-    cuerpo.innerHTML += `<tr><td>${p.producto}</td><td>${p.kilos}</td><td>${p.piezas}</td><td>${p.origen}</td><td>${p.congelado}</td><td><button class='btn btn-danger' onclick='eliminarProducto(${i})'>Eliminar</button></td></tr>`;
-  });
-}
+      const { error } = await supabase.from('envios_mostrador').insert([
+        { fecha, producto, kilos_enviado: kilos, piezas_enviac: piezas, origen, tipo, timestamp }
+      ]);
 
-function agregarDevolucion() {
-  const prod = document.getElementById('productoDevuelto').value;
-  const kg = parseFloat(document.getElementById('kilosDevueltos').value) || 0;
-  if (!prod || kg === 0) return;
-  const existente = devoluciones.find(p => p.producto === prod);
-  if (existente) {
-    existente.kilos += kg;
-  } else {
-    devoluciones.push({ producto: prod, kilos: kg });
-  }
-  actualizarDevueltos();
-  document.getElementById('productoDevuelto').value = "";
-  document.getElementById('kilosDevueltos').value = "";
-}
+      const mensaje = document.getElementById('mensaje');
+      if (error) {
+        mensaje.textContent = '❌ Error al guardar: ' + error.message;
+        mensaje.style.color = 'red';
+      } else {
+        mensaje.textContent = '✅ Envío registrado correctamente.';
+        mensaje.style.color = 'green';
 
-function eliminarDevolucion(index) {
-  devoluciones.splice(index, 1);
-  actualizarDevueltos();
-}
-
-function actualizarDevueltos() {
-  const cuerpo = document.querySelector('#tablaDevueltos tbody');
-  cuerpo.innerHTML = "";
-  devoluciones.forEach((p, i) => {
-    cuerpo.innerHTML += `<tr><td>${p.producto}</td><td>${p.kilos}</td><td><button class='btn btn-danger' onclick='eliminarDevolucion(${i})'>Eliminar</button></td></tr>`;
-  });
-}
-
-function generarDocumento() {
-  const fecha = document.getElementById('fecha').value;
-  if (!fecha || productos.length === 0) return alert("Faltan datos");
-  const resumen = {};
-  productos.forEach(p => {
-    if (!resumen[p.producto]) resumen[p.producto] = 0;
-    resumen[p.producto] += p.kilos;
-  });
-  devoluciones.forEach(d => {
-    if (!resumen[d.producto]) resumen[d.producto] = 0;
-    resumen[d.producto] -= d.kilos;
-  });
-  let mensaje = `Resumen VDC 360° - ${fecha}\n`;
-  for (const prod in resumen) {
-    mensaje += `\n${prod}: ${resumen[prod]} kg`;
-  }
-  const link = `https://api.whatsapp.com/send?text=${encodeURIComponent(mensaje)}`;
-  window.open(link, '_blank');
-}
-</script>
+        // Limpia campos
+        document.getElementById('fecha').value = '';
+        document.getElementById('producto').value = '';
+        document.getElementById('kilos').value = '';
+        document.getElementById('piezas').value = '';
+        document.getElementById('origen').value = '';
+        document.getElementById('tipo').value = '';
+      }
+    }
+  </script>
 </body>
 </html>
