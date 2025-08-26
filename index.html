@@ -74,24 +74,28 @@
         <option value="Caja menudo vísceras">Caja menudo vísceras</option>
         <option value="Caja Menudo National">Caja Menudo National</option>
         <option value="Panza">Panza</option>
-         <option value="Libro">Libro</option>
-         <option value="Tripa">Tripa</option>
-         <option value="Tripa de rastro">Tripá de rastro</option>
-         <option value="Corazon">Corazon</option>
-         <option value="Higado">Higado</option>
-         <option value="Sebo">Sebo</option>
-         <option value="Pata Blanca">Pata Blanca</option>
-         <option value="Pata Morena">Pata Morena</option>
-         <option value="Cabeza sin lengua">Cabeza sin lengua</option>
-         <option value="Sebo">Sebo</option>
-         <option value="Bofe">Bofe</option>
-         <option value="Tripa Gorda">Tripa gorda</option>
+        <option value="Libro">Libro</option>
+        <option value="Tripa">Tripa</option>
+        <option value="Tripa de rastro">Tripá de rastro</option>
+        <option value="Corazon">Corazon</option>
+        <option value="Higado">Higado</option>
+        <option value="Sebo">Sebo</option>
+        <option value="Pata Blanca">Pata Blanca</option>
+        <option value="Pata Morena">Pata Morena</option>
+        <option value="Cabeza sin lengua">Cabeza sin lengua</option>
+        <option value="Bofe">Bofe</option>
+        <option value="Tripa Gorda">Tripa gorda</option>
         <option value="Caja Excel">Caja Excel</option>
         <option value="Menudo Canadian">Menudo Canadian</option>
         <option value="Caja Washington">Caja Washington</option>
-         <option value="Cabeza de res">Cabeza de res</option>
+        <option value="Cabeza de res">Cabeza de res</option>
+        <option value="Teleco">Teleco</option>
+        <option value="Nana">Nana</option>
+        <option value="Cabeza de Rastro">Cabeza de Rastro</option>
+        <option value="Tripa de Rastro">Tripa de Rastro</option>
+        <option value="Cabeza Congelada">Cabeza Congelada</option>
+        <option value="Quajo">Quajo</option>
         <option value="Producto Libre">Producto Libre</option>
-        
       </select>
     </label>
 
@@ -229,38 +233,51 @@
     }
 
     function enviarWhatsApp() {
-  const fecha = document.getElementById("fecha").value;
+      const fecha = document.getElementById("fecha").value;
 
-  // Agrupar productos enviados
-  const resumen = {};
-  enviados.forEach((p) => {
-    const key = `${p.producto}|${p.origen}|${p.congelado}`;
-    if (!resumen[key]) {
-      resumen[key] = { kilos: 0, piezas: 0 };
+      const agrupadoEnviados = {};
+      const agrupadoDevueltos = {};
+      let totalKilosEnviados = 0;
+      let totalKilosDevueltos = 0;
+
+      // Agrupar productos enviados
+      enviados.forEach(p => {
+        if (!agrupadoEnviados[p.producto]) {
+          agrupadoEnviados[p.producto] = { kilos: 0, piezas: 0 };
+        }
+        agrupadoEnviados[p.producto].kilos += parseFloat(p.kilos);
+        agrupadoEnviados[p.producto].piezas += parseInt(p.piezas || 0);
+        totalKilosEnviados += parseFloat(p.kilos);
+      });
+
+      // Agrupar productos devueltos
+      devueltos.forEach(p => {
+        if (!agrupadoDevueltos[p.producto]) {
+          agrupadoDevueltos[p.producto] = 0;
+        }
+        agrupadoDevueltos[p.producto] += parseFloat(p.kilos);
+        totalKilosDevueltos += parseFloat(p.kilos);
+      });
+
+      let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n`;
+      mensaje += `🟢 *Productos enviados:*\n`;
+      for (const [producto, datos] of Object.entries(agrupadoEnviados)) {
+        mensaje += `• ${producto}: ${datos.kilos.toFixed(2)} kg / ${datos.piezas} pzas\n`;
+      }
+
+      mensaje += `\n📦 *Total kilos enviados:* ${totalKilosEnviados.toFixed(2)} kg\n`;
+
+      if (devueltos.length > 0) {
+        mensaje += `\n🔴 *Productos devueltos:*\n`;
+        for (const [producto, kilos] of Object.entries(agrupadoDevueltos)) {
+          mensaje += `• ${producto}: ${kilos.toFixed(2)} kg\n`;
+        }
+        mensaje += `\n📦 *Total kilos devueltos:* ${totalKilosDevueltos.toFixed(2)} kg\n`;
+      }
+
+      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
+      window.open(url, "_blank");
     }
-    resumen[key].kilos += parseFloat(p.kilos);
-    resumen[key].piezas += parseInt(p.piezas || 0);
-  });
-
-  let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n🟢 *Productos enviados:*\n`;
-
-  for (const key in resumen) {
-    const [producto, origen, congelado] = key.split("|");
-    const total = resumen[key];
-    mensaje += `• ${producto}: ${total.kilos} kg / ${total.piezas} pzas / ${origen} / ${congelado}\n`;
-  }
-
-  if (devueltos.length > 0) {
-    mensaje += `\n🔴 *Productos devueltos:*\n`;
-    devueltos.forEach((d) => {
-      mensaje += `• ${d.producto}: ${d.kilos} kg\n`;
-    });
-  }
-
-  const numero = ""; // tu número o el que desees
-  const url = `https://wa.me/${numero}?text=${encodeURIComponent(mensaje)}`;
-  window.open(url, "_blank");
-}
 
     document.getElementById("fecha").valueAsDate = new Date();
   </script>
