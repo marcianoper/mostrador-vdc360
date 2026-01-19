@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <title>Registro Mostrador VDC 360°</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
     body { font-family: sans-serif; background:#f2f2f2; padding:20px; }
     .container { background:#fff; padding:30px; border-radius:10px; max-width:900px; margin:auto; }
@@ -14,11 +15,14 @@
     th, td { border:2px solid #1f6f26; padding:8px; text-align:center; }
     th { background:#1f6f26; color:#fff; }
     .subtitulo { font-size:22px; font-weight:bold; margin-top:40px; }
+    .hint { font-size:12px; color:#555; margin-top:8px; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef7ef; color:#1f6f26; font-weight:700; font-size:12px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <h1>Registro Mostrador VDC 360° matrix</h1>
+    <h1>Registro Mostrador VDC 360° matrix <span id="rt" class="pill">REAL TIME</span></h1>
+    <div class="hint">Todo lo que agregues/eliminés se sincroniza en vivo en otros dispositivos abiertos en la misma fecha.</div>
 
     <label>Fecha:
       <input type="date" id="fecha" value="">
@@ -59,7 +63,7 @@
     </label>
 
     <label>Kilos:
-      <input type="number" id="kilos" />
+      <input type="number" id="kilos" step="0.01" />
     </label>
 
     <label>Piezas (opcional):
@@ -67,7 +71,7 @@
     </label>
 
     <label>Origen:
-      <input type="text" id="origen" />
+      <input type="text" id="origen" placeholder="Ej: rastro / limpieza / congelado" />
     </label>
 
     <label>¿Es congelado?
@@ -77,7 +81,7 @@
       </select>
     </label>
 
-    <button onclick="agregarProducto()">Agregar producto</button>
+    <button id="btnAgregar">Agregar producto</button>
 
     <h2 class="subtitulo">Productos enviados</h2>
     <table id="tablaEnviados">
@@ -100,10 +104,10 @@
     </label>
 
     <label>Kilos devueltos:
-      <input type="number" id="kilosDevuelto" />
+      <input type="number" id="kilosDevuelto" step="0.01" />
     </label>
 
-    <button onclick="agregarDevuelto()">Agregar producto devuelto</button>
+    <button id="btnAgregarDev">Agregar producto devuelto</button>
 
     <table id="tablaDevueltos">
       <thead>
@@ -124,93 +128,262 @@
 
   <script>
     /* ===== CONFIG SUPABASE ===== */
-    const SUPABASE_URL = "https://eqynjddcosvdqjzztznn.supabase.co"; // sin espacios
+    const SUPABASE_URL = "https://eqynjddcosvdqjzztznn.supabase.co";
     const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeW5qZGRjb3N2ZHFqenp0em5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzYwMzIsImV4cCI6MjA3MTcxMjAzMn0.Q51wsGelUvxRfqsMYRY5JduCGyZ7s6AzOhqsRf3kOhk";
 
-    // OJO: NO usar "const supabase = ..." porque el CDN ya usa ese nombre global.
-    const supabaseClient = (window.supabase && window.supabase.createClient)
+    const sb = (window.supabase && window.supabase.createClient)
       ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
       : null;
 
-    /* ===== Estado de la página ===== */
-    let enviados = [];
-    let devueltos = [];
+    const T_ENVIADOS = "mostrador_enviados";
+    const T_DEVUELTOS = "mostrador_devueltos";
 
-    function agregarProducto() {
-      const producto = document.getElementById('producto').value;
-      const kilos = document.getElementById('kilos').value;
-      const piezas = document.getElementById('piezas').value || 0;
-      const origen = document.getElementById('origen').value;
-      const congelado = document.getElementById('congelado').value;
+    /* ===== Estado en memoria ===== */
+    let enviados = [];   // [{id, producto, kilos, piezas, origen, congelado}]
+    let devueltos = [];  // [{id, producto, kilos}]
+
+    let rtChannel = null;
+
+    const $ = (s)=>document.querySelector(s);
+
+    function todayISODate(){
+      const d = new Date();
+      const off = d.getTimezoneOffset();
+      const local = new Date(d.getTime() - off*60000);
+      return local.toISOString().slice(0,10);
+    }
+
+    function fechaSeleccionada(){
+      return $('#fecha')?.value || todayISODate();
+    }
+
+    function num(v){
+      const n = Number(v);
+      return Number.isFinite(n) ? n : 0;
+    }
+
+    function renderTablaEnviados() {
+      const tbody = document.querySelector("#tablaEnviados tbody");
+      tbody.innerHTML = enviados.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.producto)}</td>
+          <td>${(+item.kilos).toFixed(2)}</td>
+          <td>${item.piezas || 0}</td>
+          <td>${escapeHtml(item.origen || '')}</td>
+          <td>${escapeHtml(item.congelado || 'No')}</td>
+          <td><button onclick="eliminarProducto('${item.id}')">Eliminar</button></td>
+        </tr>`).join('');
+    }
+
+    function renderTablaDevueltos() {
+      const tbody = document.querySelector("#tablaDevueltos tbody");
+      tbody.innerHTML = devueltos.map((item) => `
+        <tr>
+          <td>${escapeHtml(item.producto)}</td>
+          <td>${(+item.kilos).toFixed(2)}</td>
+          <td><button onclick="eliminarDevuelto('${item.id}')">Eliminar</button></td>
+        </tr>`).join('');
+    }
+
+    function escapeHtml(str){
+      return String(str ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    /* ===== Carga inicial por fecha ===== */
+    async function cargarDia(fecha){
+      if(!sb) { alert("No cargó Supabase. Revisa el CDN o internet."); return; }
+
+      // Enviados
+      const { data: env, error: e1 } = await sb
+        .from(T_ENVIADOS)
+        .select("id, producto, kilos, piezas, origen, congelado")
+        .eq("fecha", fecha)
+        .order("created_at", { ascending: true });
+
+      if(e1){ console.error(e1); }
+
+      // Devueltos
+      const { data: dev, error: e2 } = await sb
+        .from(T_DEVUELTOS)
+        .select("id, producto, kilos")
+        .eq("fecha", fecha)
+        .order("created_at", { ascending: true });
+
+      if(e2){ console.error(e2); }
+
+      enviados = (env || []).map(x=>({
+        id:x.id,
+        producto:x.producto,
+        kilos:+x.kilos,
+        piezas:+(x.piezas||0),
+        origen:x.origen,
+        congelado:x.congelado
+      }));
+
+      devueltos = (dev || []).map(x=>({
+        id:x.id,
+        producto:x.producto,
+        kilos:+x.kilos
+      }));
+
+      renderTablaEnviados();
+      renderTablaDevueltos();
+    }
+
+    /* ===== Realtime (suscripción por fecha) ===== */
+    async function conectarRealtime(fecha){
+      if(!sb) return;
+
+      // cerrar canal anterior
+      if(rtChannel){
+        try { await sb.removeChannel(rtChannel); } catch(e){}
+        rtChannel = null;
+      }
+
+      // IMPORTANTE: filtros por fecha
+      // Nota: supabase realtime filtra por "fecha=eq.YYYY-MM-DD"
+      rtChannel = sb.channel(`mostrador-rt-${fecha}`);
+
+      rtChannel
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: T_ENVIADOS, filter: `fecha=eq.${fecha}` },
+          (payload)=>{
+            const r = payload.new;
+            // evitar duplicados
+            if(enviados.some(x=>x.id===r.id)) return;
+            enviados.push({
+              id:r.id,
+              producto:r.producto,
+              kilos:+r.kilos,
+              piezas:+(r.piezas||0),
+              origen:r.origen,
+              congelado:r.congelado
+            });
+            renderTablaEnviados();
+          }
+        )
+        .on('postgres_changes',
+          { event: 'DELETE', schema: 'public', table: T_ENVIADOS, filter: `fecha=eq.${fecha}` },
+          (payload)=>{
+            const id = payload.old?.id;
+            if(!id) return;
+            enviados = enviados.filter(x=>x.id!==id);
+            renderTablaEnviados();
+          }
+        )
+        .on('postgres_changes',
+          { event: 'INSERT', schema: 'public', table: T_DEVUELTOS, filter: `fecha=eq.${fecha}` },
+          (payload)=>{
+            const r = payload.new;
+            if(devueltos.some(x=>x.id===r.id)) return;
+            devueltos.push({ id:r.id, producto:r.producto, kilos:+r.kilos });
+            renderTablaDevueltos();
+          }
+        )
+        .on('postgres_changes',
+          { event: 'DELETE', schema: 'public', table: T_DEVUELTOS, filter: `fecha=eq.${fecha}` },
+          (payload)=>{
+            const id = payload.old?.id;
+            if(!id) return;
+            devueltos = devueltos.filter(x=>x.id!==id);
+            renderTablaDevueltos();
+          }
+        );
+
+      const status = await rtChannel.subscribe((s)=>{
+        // s: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR'
+        const pill = $('#rt');
+        if(!pill) return;
+        if(s === 'SUBSCRIBED'){ pill.textContent = 'REAL TIME'; }
+        else { pill.textContent = 'RT: ' + s; }
+      });
+    }
+
+    /* ===== Agregar / Eliminar (ahora va a Supabase) ===== */
+    async function agregarProducto() {
+      const fecha = fechaSeleccionada();
+      const producto = $('#producto').value;
+      const kilos = $('#kilos').value;
+      const piezas = $('#piezas').value || 0;
+      const origen = $('#origen').value;
+      const congelado = $('#congelado').value;
 
       if (!producto || !kilos || !origen) {
         alert("Por favor completa los campos obligatorios.");
         return;
       }
 
-      enviados.push({
+      const row = {
+        fecha,
         producto,
-        kilos: parseFloat(kilos),
-        piezas: parseInt(piezas || 0, 10),
+        kilos: Number(parseFloat(kilos).toFixed(2)),
+        piezas: parseInt(piezas || 0, 10) || 0,
         origen,
         congelado
-      });
+      };
 
-      renderTablaEnviados();
-      scheduleSaves();
+      const { error } = await sb.from(T_ENVIADOS).insert(row);
+      if(error){
+        console.error(error);
+        alert("No se pudo guardar. Revisa internet o políticas RLS.");
+        return;
+      }
+
+      // limpiar inputs (opcional)
+      $('#kilos').value = '';
+      $('#piezas').value = '';
+      // NO hacemos push manual: Realtime lo mete solo (así siempre coincide)
     }
 
-    function agregarDevuelto() {
-      const producto = document.getElementById('productoDevuelto').value;
-      const kilos = document.getElementById('kilosDevuelto').value;
+    async function agregarDevuelto() {
+      const fecha = fechaSeleccionada();
+      const producto = $('#productoDevuelto').value;
+      const kilos = $('#kilosDevuelto').value;
 
       if (!producto || !kilos) {
         alert("Completa ambos campos del producto devuelto.");
         return;
       }
 
-      devueltos.push({ producto, kilos: parseFloat(kilos) });
-      renderTablaDevueltos();
-      scheduleSaves();
+      const row = { fecha, producto, kilos: Number(parseFloat(kilos).toFixed(2)) };
+      const { error } = await sb.from(T_DEVUELTOS).insert(row);
+      if(error){
+        console.error(error);
+        alert("No se pudo guardar devuelto. Revisa internet o RLS.");
+        return;
+      }
+
+      $('#productoDevuelto').value = '';
+      $('#kilosDevuelto').value = '';
     }
 
-    function eliminarProducto(index) {
-      enviados.splice(index, 1);
-      renderTablaEnviados();
-      scheduleSaves();
+    async function eliminarProducto(id) {
+      if(!id) return;
+      const { error } = await sb.from(T_ENVIADOS).delete().eq('id', id);
+      if(error){
+        console.error(error);
+        alert("No se pudo eliminar. Revisa internet o RLS.");
+      }
+      // Realtime actualizará la tabla
     }
 
-    function eliminarDevuelto(index) {
-      devueltos.splice(index, 1);
-      renderTablaDevueltos();
-      scheduleSaves();
+    async function eliminarDevuelto(id) {
+      if(!id) return;
+      const { error } = await sb.from(T_DEVUELTOS).delete().eq('id', id);
+      if(error){
+        console.error(error);
+        alert("No se pudo eliminar devuelto. Revisa internet o RLS.");
+      }
     }
 
-    function renderTablaEnviados() {
-      const tbody = document.querySelector("#tablaEnviados tbody");
-      tbody.innerHTML = enviados.map((item, index) => `
-        <tr>
-          <td>${item.producto}</td>
-          <td>${(+item.kilos).toFixed(2)}</td>
-          <td>${item.piezas || 0}</td>
-          <td>${item.origen}</td>
-          <td>${item.congelado}</td>
-          <td><button onclick="eliminarProducto(${index})">Eliminar</button></td>
-        </tr>`).join('');
-    }
-
-    function renderTablaDevueltos() {
-      const tbody = document.querySelector("#tablaDevueltos tbody");
-      tbody.innerHTML = devueltos.map((item, index) => `
-        <tr>
-          <td>${item.producto}</td>
-          <td>${(+item.kilos).toFixed(2)}</td>
-          <td><button onclick="eliminarDevuelto(${index})">Eliminar</button></td>
-        </tr>`).join('');
-    }
-
+    /* ===== WhatsApp (igual que tu lógica, pero usando arrays actuales) ===== */
     function enviarWhatsApp() {
-      const fecha = document.getElementById("fecha").value;
+      const fecha = fechaSeleccionada();
 
       const agrupadoEnviados = {};
       const agrupadoDevueltos = {};
@@ -219,15 +392,15 @@
 
       enviados.forEach(p => {
         if (!agrupadoEnviados[p.producto]) agrupadoEnviados[p.producto] = { kilos: 0, piezas: 0 };
-        agrupadoEnviados[p.producto].kilos += parseFloat(p.kilos || 0);
+        agrupadoEnviados[p.producto].kilos += num(p.kilos);
         agrupadoEnviados[p.producto].piezas += parseInt(p.piezas || 0, 10);
-        totalKilosEnviados += parseFloat(p.kilos || 0);
+        totalKilosEnviados += num(p.kilos);
       });
 
       devueltos.forEach(p => {
         if (!agrupadoDevueltos[p.producto]) agrupadoDevueltos[p.producto] = 0;
-        agrupadoDevueltos[p.producto] += parseFloat(p.kilos || 0);
-        totalKilosDevueltos += parseFloat(p.kilos || 0);
+        agrupadoDevueltos[p.producto] += num(p.kilos);
+        totalKilosDevueltos += num(p.kilos);
       });
 
       let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n`;
@@ -249,133 +422,25 @@
       window.open(url, "_blank");
     }
 
-    document.getElementById("fecha").valueAsDate = new Date();
+    /* ===== Arranque ===== */
+    document.getElementById("fecha").value = todayISODate();
 
-    /* ========= AUTOSAVE LOCAL + NUBE (app_drafts) ========= */
-    const CLOUD_MODULE = 'mostrador';
-    const $ = (s)=>document.querySelector(s);
-    const $allInputs = ()=>Array.from(document.querySelectorAll('input, select, textarea'));
+    $('#btnAgregar').addEventListener('click', agregarProducto);
+    $('#btnAgregarDev').addEventListener('click', agregarDevuelto);
 
-    function getCloudKey(){
-      const f = $('#fecha')?.value || new Date().toISOString().slice(0,10);
-      return `mostrador-${f}`;
+    async function iniciar(){
+      const f = fechaSeleccionada();
+      await cargarDia(f);
+      await conectarRealtime(f);
     }
 
-    function collectFormData(){
-      const data = {};
-      $allInputs().forEach(el=>{
-        const k = el.id || el.name || el.dataset.key; if(!k) return;
-        data[k] = (el.type==='checkbox') ? !!el.checked : el.value;
-      });
-      data.__enviados = enviados;
-      data.__devueltos = devueltos;
-      return data;
-    }
-
-    function applyFormData(data){
-      if(!data) return;
-      $allInputs().forEach(el=>{
-        const k = el.id || el.name || el.dataset.key;
-        if(!k || !(k in data)) return;
-        if(el.type==='checkbox') el.checked = !!data[k];
-        else el.value = data[k];
-      });
-      if (Array.isArray(data.__enviados)) {
-        enviados = data.__enviados.map(x=>({ ...x, kilos:+x.kilos, piezas:+(x.piezas||0) }));
-        renderTablaEnviados();
-      }
-      if (Array.isArray(data.__devueltos)) {
-        devueltos = data.__devueltos.map(x=>({ ...x, kilos:+x.kilos }));
-        renderTablaDevueltos();
-      }
-    }
-
-    // LocalStorage
-    let hasUnsavedChanges=false, tLocal=null;
-    function lkey(){ return `draft:${CLOUD_MODULE}:${getCloudKey()}`; }
-    function saveLocal(){
-      localStorage.setItem(lkey(), JSON.stringify({ts:Date.now(), data:collectFormData()}));
-      hasUnsavedChanges=true;
-    }
-    function loadLocal(){
-      const raw=localStorage.getItem(lkey());
-      if(!raw) return;
-      try{ applyFormData(JSON.parse(raw).data); }catch{}
-    }
-    function clearLocal(){ localStorage.removeItem(lkey()); hasUnsavedChanges=false; }
-
-    function onAnyChange(){
-      clearTimeout(tLocal);
-      tLocal=setTimeout(saveLocal, 500);
-      scheduleCloud();
-    }
-
-    $allInputs().forEach(el=> el.addEventListener('input', onAnyChange));
-    window.addEventListener('beforeunload', (e)=>{ if(!hasUnsavedChanges) return; e.preventDefault(); e.returnValue=''; });
-
-    // Nube (Supabase)
-    async function uid(){
-      try{
-        if(!supabaseClient) return null;
-        const { data:{ user } } = await supabaseClient.auth.getUser();
-        return user?.id || null;
-      }catch{ return null; }
-    }
-
-    let tCloud=null;
-    function scheduleCloud(){ clearTimeout(tCloud); tCloud=setTimeout(saveCloud, 1000); }
-
-    async function saveCloud(){
-      const user_id = await uid();
-      if(!user_id) return; // si no hay login, no sube (pero local sí)
-      const payload = {
-        module:CLOUD_MODULE,
-        draft_key:getCloudKey(),
-        user_id,
-        data:collectFormData(),
-        updated_at:new Date().toISOString()
-      };
-      await supabaseClient.from('app_drafts').upsert(payload, { onConflict:'module,draft_key,user_id' });
-    }
-
-    async function loadCloud(){
-      const user_id = await uid();
-      if(!user_id) return;
-      const { data } = await supabaseClient.from('app_drafts')
-        .select('data')
-        .eq('module', CLOUD_MODULE)
-        .eq('draft_key', getCloudKey())
-        .eq('user_id', user_id)
-        .maybeSingle();
-      if(data?.data) applyFormData(data.data);
-    }
-
-    async function clearCloud(){
-      const user_id = await uid();
-      if(user_id){
-        await supabaseClient.from('app_drafts')
-          .delete()
-          .eq('module',CLOUD_MODULE)
-          .eq('draft_key',getCloudKey())
-          .eq('user_id', user_id);
-      }
-      clearLocal();
-    }
-
-    window.__VDC360_DRAFTS__ = { clearCloudDraft: clearCloud };
-
-    window.addEventListener('load', async ()=>{
-      await loadCloud();
-      loadLocal();
+    $('#fecha').addEventListener('change', async ()=>{
+      const f = fechaSeleccionada();
+      await cargarDia(f);
+      await conectarRealtime(f);
     });
 
-    document.querySelector('#fecha')?.addEventListener('change', async ()=>{
-      await loadCloud();
-      loadLocal();
-    });
-
-    function scheduleSaves(){ onAnyChange(); }
+    iniciar();
   </script>
 </body>
 </html>
-
