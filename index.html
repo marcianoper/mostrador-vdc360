@@ -8,7 +8,7 @@
   <style>
     body { font-family: sans-serif; background:#f2f2f2; padding:20px; }
     .container { background:#fff; padding:30px; border-radius:10px; max-width:900px; margin:auto; }
-    h1 { color:green; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
+    h1 { color:green; display:flex; gap:10px; flex-wrap:wrap; }
     label { display:block; margin-top:15px; }
     input, select { width:100%; padding:10px; margin-top:5px; }
     button { margin-top:20px; padding:12px; background:#1f6f26; color:#fff; border:none; border-radius:5px; cursor:pointer; width:100%; font-weight:bold; }
@@ -16,557 +16,213 @@
     th, td { border:2px solid #1f6f26; padding:8px; text-align:center; }
     th { background:#1f6f26; color:#fff; }
     .subtitulo { font-size:22px; font-weight:bold; margin-top:40px; }
-    .hint { font-size:12px; color:#555; margin-top:8px; }
-    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef7ef; color:#1f6f26; font-weight:800; font-size:12px; }
-    .pill.off { background:#fff1f2; color:#b91c1c; }
-    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
-    @media (max-width:720px){ .row2{ grid-template-columns:1fr; } }
-    canvas{ width:100%; }
+    .pill { background:#eef7ef; color:#1f6f26; padding:4px 10px; border-radius:999px; font-size:12px; font-weight:800; }
+    canvas { width:100%; }
   </style>
 </head>
 
 <body>
-  <div class="container">
-    <h1>
-      Registro Mostrador VDC 360° matrix
-      <span id="rt" class="pill">REAL TIME</span>
-    </h1>
-    <div class="hint">Todo lo que agregues/eliminés se sincroniza en vivo en otros dispositivos abiertos en la misma fecha.</div>
-
-    <label>Fecha:
-      <input type="date" id="fecha" value="">
-    </label>
-
-    <label>Producto:
-      <select id="producto">
-        <option value="">Seleccionar</option>
-        <option value="Caja menudo vísceras">Caja menudo vísceras</option>
-        <option value="Caja Menudo National">Caja Menudo National</option>
-        <option value="Panza">Panza</option>
-        <option value="Libro">Libro</option>
-        <option value="Tripa">Tripa</option>
-        <option value="Tripa de rastro">Tripa de rastro</option>
-        <option value="Corazon">Corazon</option>
-        <option value="Higado">Higado</option>
-        <option value="Sebo">Sebo</option>
-        <option value="Pata Blanca">Pata Blanca</option>
-        <option value="Pata Morena">Pata Morena</option>
-        <option value="Cabeza sin lengua">Cabeza sin lengua</option>
-        <option value="Bofe">Bofe</option>
-        <option value="Tripa Gorda">Tripa gorda</option>
-        <option value="Caja Excel">Caja Excel</option>
-        <option value="Menudo Canadian">Menudo Canadian</option>
-        <option value="Caja Washington">Caja Washington</option>
-        <option value="Cabeza de res">Cabeza de res</option>
-        <option value="Teleco">Teleco</option>
-        <option value="Nana">Nana</option>
-        <option value="Cabeza de Rastro">Cabeza de Rastro</option>
-        <option value="Tripa de Rastro">Tripa de Rastro</option>
-        <option value="Cabeza Congelada">Cabeza Congelada</option>
-        <option value="Quajo">Quajo</option>
-        <option value="Producto Libre">Producto Libre</option>
-        <option value="Lengua">Lengua</option>
-        <option value="Caja de tripa">Caja de tripa</option>
-        <option value="Caja Menudo Swift">Caja Menudo Swift</option>
-      </select>
-    </label>
-
-    <div class="row2">
-      <label>Kilos:
-        <input type="number" id="kilos" step="0.01" />
-      </label>
-
-      <label>Piezas (opcional):
-        <input type="number" id="piezas" />
-      </label>
-    </div>
-
-    <label>Origen:
-      <input type="text" id="origen" placeholder="Ej: rastro / limpieza / congelado" />
-    </label>
-
-    <label>¿Es congelado?
-      <select id="congelado">
-        <option value="No">No</option>
-        <option value="Sí">Sí</option>
-      </select>
-    </label>
-
-    <button id="btnAgregar">Agregar producto</button>
-
-    <h2 class="subtitulo">Productos enviados (lo más nuevo arriba)</h2>
-    <table id="tablaEnviados">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Kilos</th>
-          <th>Piezas</th>
-          <th>Origen</th>
-          <th>Congelado</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <h2 class="subtitulo">Productos devueltos (lo más nuevo arriba)</h2>
-
-    <label>Producto devuelto:
-      <input type="text" id="productoDevuelto" />
-    </label>
-
-    <label>Kilos devueltos:
-      <input type="number" id="kilosDevuelto" step="0.01" />
-    </label>
-
-    <button id="btnAgregarDev">Agregar producto devuelto</button>
-
-    <table id="tablaDevueltos">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Kilos</th>
-          <th>Acción</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <h2 class="subtitulo">Resumen del día (kilos y piezas)</h2>
-    <table id="tablaResumen">
-      <thead>
-        <tr>
-          <th>Producto</th>
-          <th>Kilos</th>
-          <th>Piezas</th>
-        </tr>
-      </thead>
-      <tbody></tbody>
-    </table>
-
-    <div style="height:260px; margin-top:16px;">
-      <canvas id="chartResumen"></canvas>
-    </div>
-
-    <button onclick="enviarWhatsApp()">Enviar resumen a WhatsApp</button>
-  </div>
-
-  <!-- Supabase JS (UMD) -->
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <!-- Chart.js -->
-  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-
-  <script>
-    /* ===== CONFIG SUPABASE ===== */
-    const SUPABASE_URL = "https://eqynjddcosvdqjzztznn.supabase.co";
-    const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeW5qZGRjb3N2ZHFqenp0em5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzYwMzIsImV4cCI6MjA3MTcxMjAzMn0.Q51wsGelUvxRfqsMYRY5JduCGyZ7s6AzOhqsRf3kOhk";
-
-    const sb = (window.supabase && window.supabase.createClient)
-      ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
-      : null;
-
-    const T_ENVIADOS = "mostrador_enviados";
-    const T_DEVUELTOS = "mostrador_devueltos";
-
-    /* ===== Estado ===== */
-    let enviados = [];   // [{id, producto, kilos, piezas, origen, congelado, created_at}]
-    let devueltos = [];  // [{id, producto, kilos, created_at}]
-    let rtChannel = null;
-
-    const $ = (s)=>document.querySelector(s);
-
-    function todayISODate(){
-      const d = new Date();
-      const off = d.getTimezoneOffset();
-      const local = new Date(d.getTime() - off*60000);
-      return local.toISOString().slice(0,10);
-    }
-
-    function fechaSeleccionada(){
-      return $('#fecha')?.value || todayISODate();
-    }
-
-    function num(v){
-      const n = Number(v);
-      return Number.isFinite(n) ? n : 0;
-    }
-
-    function escapeHtml(str){
-      return String(str ?? '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
-    }
-
-    /* ===== Render tablas ===== */
-    function renderTablaEnviados() {
-      const tbody = document.querySelector("#tablaEnviados tbody");
-      tbody.innerHTML = enviados.map((item) => `
-        <tr>
-          <td>${escapeHtml(item.producto)}</td>
-          <td>${(+item.kilos).toFixed(2)}</td>
-          <td>${item.piezas || 0}</td>
-          <td>${escapeHtml(item.origen || '')}</td>
-          <td>${escapeHtml(item.congelado || 'No')}</td>
-          <td><button onclick="eliminarProducto('${item.id}')">Eliminar</button></td>
-        </tr>`).join('');
-    }
-
-    function renderTablaDevueltos() {
-      const tbody = document.querySelector("#tablaDevueltos tbody");
-      tbody.innerHTML = devueltos.map((item) => `
-        <tr>
-          <td>${escapeHtml(item.producto)}</td>
-          <td>${(+item.kilos).toFixed(2)}</td>
-          <td><button onclick="eliminarDevuelto('${item.id}')">Eliminar</button></td>
-        </tr>`).join('');
-    }
-
-    /* ===== Resumen + chart ===== */
-    function buildResumen(){
-      const map = new Map();
-      for(const r of enviados){
-        const k = r.producto;
-        if(!map.has(k)) map.set(k, { producto:k, kilos:0, piezas:0 });
-        const o = map.get(k);
-        o.kilos += num(r.kilos);
-        o.piezas += parseInt(r.piezas||0,10);
-      }
-      return Array.from(map.values()).sort((a,b)=>b.kilos-a.kilos);
-    }
-
-    function renderResumen(){
-      const rows = buildResumen();
-      const tbody = document.querySelector("#tablaResumen tbody");
-      tbody.innerHTML = rows.map(r=>`
-        <tr>
-          <td>${escapeHtml(r.producto)}</td>
-          <td>${r.kilos.toFixed(2)}</td>
-          <td>${r.piezas}</td>
-        </tr>
-      `).join('');
-    }
-
-    let chartResumen = null;
-    function renderChart(){
-      const rows = buildResumen();
-      const labels = rows.map(r=>r.producto);
-      const kilos = rows.map(r=>Number(r.kilos.toFixed(2)));
-      const piezas = rows.map(r=>r.piezas);
-
-      const canvas = document.getElementById('chartResumen');
-      if(!canvas) return;
-
-      if(chartResumen){
-        chartResumen.data.labels = labels;
-        chartResumen.data.datasets[0].data = kilos;
-        chartResumen.data.datasets[1].data = piezas;
-        chartResumen.update();
-        return;
-      }
-
-      chartResumen = new Chart(canvas, {
-        type: 'bar',
-        data: {
-          labels,
-          datasets: [
-            { label: 'Kilos', data: kilos },
-            { label: 'Piezas', data: piezas }
-          ]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          scales: { y: { beginAtZero: true } }
-        }
-      });
-    }
-
-    function renderAll(){
-      renderTablaEnviados();
-      renderTablaDevueltos();
-      renderResumen();
-      renderChart();
-    }
-
-    /* ===== Cargar día (nuevo arriba) ===== */
-    async function cargarDia(fecha){
-      if(!sb) { alert("No cargó Supabase. Revisa el CDN o internet."); return; }
-
-      const { data: env, error: e1 } = await sb
-        .from(T_ENVIADOS)
-        .select("id, producto, kilos, piezas, origen, congelado, created_at")
-        .eq("fecha", fecha)
-        .order("created_at", { ascending: false });
-
-      if(e1){ console.error(e1); }
-
-      const { data: dev, error: e2 } = await sb
-        .from(T_DEVUELTOS)
-        .select("id, producto, kilos, created_at")
-        .eq("fecha", fecha)
-        .order("created_at", { ascending: false });
-
-      if(e2){ console.error(e2); }
-
-      enviados = (env || []).map(x=>({
-        id:x.id,
-        producto:x.producto,
-        kilos:+x.kilos,
-        piezas:+(x.piezas||0),
-        origen:x.origen,
-        congelado:x.congelado,
-        created_at:x.created_at
-      }));
-
-      devueltos = (dev || []).map(x=>({
-        id:x.id,
-        producto:x.producto,
-        kilos:+x.kilos,
-        created_at:x.created_at
-      }));
-
-      renderAll();
-    }
-
-    /* ===== Realtime ===== */
-    async function conectarRealtime(fecha){
-      if(!sb) return;
-
-      if(rtChannel){
-        try { await sb.removeChannel(rtChannel); } catch(e){}
-        rtChannel = null;
-      }
-
-      rtChannel = sb.channel(`mostrador-rt-${fecha}`);
-
-      rtChannel
-        .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: T_ENVIADOS, filter: `fecha=eq.${fecha}` },
-          (payload)=>{
-            const r = payload.new;
-            if(enviados.some(x=>x.id===r.id)) return;
-            enviados.unshift({
-              id:r.id,
-              producto:r.producto,
-              kilos:+r.kilos,
-              piezas:+(r.piezas||0),
-              origen:r.origen,
-              congelado:r.congelado,
-              created_at:r.created_at
-            });
-            renderAll();
-          }
-        )
-        .on('postgres_changes',
-          { event: 'DELETE', schema: 'public', table: T_ENVIADOS, filter: `fecha=eq.${fecha}` },
-          (payload)=>{
-            const id = payload.old?.id;
-            if(!id) return;
-            enviados = enviados.filter(x=>x.id!==id);
-            renderAll();
-          }
-        )
-        .on('postgres_changes',
-          { event: 'INSERT', schema: 'public', table: T_DEVUELTOS, filter: `fecha=eq.${fecha}` },
-          (payload)=>{
-            const r = payload.new;
-            if(devueltos.some(x=>x.id===r.id)) return;
-            devueltos.unshift({ id:r.id, producto:r.producto, kilos:+r.kilos, created_at:r.created_at });
-            renderAll();
-          }
-        )
-        .on('postgres_changes',
-          { event: 'DELETE', schema: 'public', table: T_DEVUELTOS, filter: `fecha=eq.${fecha}` },
-          (payload)=>{
-            const id = payload.old?.id;
-            if(!id) return;
-            devueltos = devueltos.filter(x=>x.id!==id);
-            renderAll();
-          }
-        );
-
-      await rtChannel.subscribe((s)=>{
-        const pill = $('#rt');
-        if(!pill) return;
-        if(s === 'SUBSCRIBED'){
-          pill.textContent = 'REAL TIME';
-          pill.classList.remove('off');
-        }else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){
-          pill.textContent = 'RT: ' + s;
-          pill.classList.add('off');
-        }else{
-          pill.textContent = 'RT: ' + s;
-        }
-      });
-    }
-
-    /* ===== Optimistic UI inserts ===== */
-    async function agregarProducto() {
-      const fecha = fechaSeleccionada();
-      const producto = $('#producto').value;
-      const kilos = $('#kilos').value;
-      const piezas = $('#piezas').value || 0;
-      const origen = $('#origen').value;
-      const congelado = $('#congelado').value;
-
-      if (!producto || !kilos || !origen) {
-        alert("Por favor completa los campos obligatorios.");
-        return;
-      }
-
-      const row = {
-        fecha,
-        producto,
-        kilos: Number(parseFloat(kilos).toFixed(2)),
-        piezas: parseInt(piezas || 0, 10) || 0,
-        origen,
-        congelado
-      };
-
-      const { data, error } = await sb
-        .from(T_ENVIADOS)
-        .insert(row)
-        .select("id, producto, kilos, piezas, origen, congelado, created_at")
-        .single();
-
-      if(error){
-        console.error(error);
-        alert("No se pudo guardar. Revisa internet o políticas RLS / Realtime.");
-        return;
-      }
-
-      if(!enviados.some(x=>x.id===data.id)){
-        enviados.unshift({
-          id:data.id,
-          producto:data.producto,
-          kilos:+data.kilos,
-          piezas:+(data.piezas||0),
-          origen:data.origen,
-          congelado:data.congelado,
-          created_at:data.created_at
-        });
-        renderAll();
-      }
-
-      $('#kilos').value = '';
-      $('#piezas').value = '';
-    }
-
-    async function agregarDevuelto() {
-      const fecha = fechaSeleccionada();
-      const producto = $('#productoDevuelto').value;
-      const kilos = $('#kilosDevuelto').value;
-
-      if (!producto || !kilos) {
-        alert("Completa ambos campos del producto devuelto.");
-        return;
-      }
-
-      const row = { fecha, producto, kilos: Number(parseFloat(kilos).toFixed(2)) };
-
-      const { data, error } = await sb
-        .from(T_DEVUELTOS)
-        .insert(row)
-        .select("id, producto, kilos, created_at")
-        .single();
-
-      if(error){
-        console.error(error);
-        alert("No se pudo guardar devuelto. Revisa internet o RLS / Realtime.");
-        return;
-      }
-
-      if(!devueltos.some(x=>x.id===data.id)){
-        devueltos.unshift({ id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at });
-        renderAll();
-      }
-
-      $('#productoDevuelto').value = '';
-      $('#kilosDevuelto').value = '';
-    }
-
-    async function eliminarProducto(id) {
-      if(!id) return;
-      const { error } = await sb.from(T_ENVIADOS).delete().eq('id', id);
-      if(error){
-        console.error(error);
-        alert("No se pudo eliminar. Revisa internet o RLS.");
-      }
-      // Realtime hará el update (y si no llega, igual se verá tras recarga)
-    }
-
-    async function eliminarDevuelto(id) {
-      if(!id) return;
-      const { error } = await sb.from(T_DEVUELTOS).delete().eq('id', id);
-      if(error){
-        console.error(error);
-        alert("No se pudo eliminar devuelto. Revisa internet o RLS.");
-      }
-    }
-
-    /* ===== WhatsApp ===== */
-    function enviarWhatsApp() {
-      const fecha = fechaSeleccionada();
-
-      const agrupadoEnviados = {};
-      const agrupadoDevueltos = {};
-      let totalKilosEnviados = 0;
-      let totalKilosDevueltos = 0;
-
-      enviados.forEach(p => {
-        if (!agrupadoEnviados[p.producto]) agrupadoEnviados[p.producto] = { kilos: 0, piezas: 0 };
-        agrupadoEnviados[p.producto].kilos += num(p.kilos);
-        agrupadoEnviados[p.producto].piezas += parseInt(p.piezas || 0, 10);
-        totalKilosEnviados += num(p.kilos);
-      });
-
-      devueltos.forEach(p => {
-        if (!agrupadoDevueltos[p.producto]) agrupadoDevueltos[p.producto] = 0;
-        agrupadoDevueltos[p.producto] += num(p.kilos);
-        totalKilosDevueltos += num(p.kilos);
-      });
-
-      let mensaje = `*Resumen VDC 360° - ${fecha}*\n\n`;
-      mensaje += `🟢 *Productos enviados:*\n`;
-      for (const [producto, datos] of Object.entries(agrupadoEnviados)) {
-        mensaje += `• ${producto}: ${datos.kilos.toFixed(2)} kg / ${datos.piezas} pzas\n`;
-      }
-      mensaje += `\n📦 *Total kilos enviados:* ${totalKilosEnviados.toFixed(2)} kg\n`;
-
-      if (devueltos.length > 0) {
-        mensaje += `\n🔴 *Productos devueltos:*\n`;
-        for (const [producto, kilos] of Object.entries(agrupadoDevueltos)) {
-          mensaje += `• ${producto}: ${kilos.toFixed(2)} kg\n`;
-        }
-        mensaje += `\n📦 *Total kilos devueltos:* ${totalKilosDevueltos.toFixed(2)} kg\n`;
-      }
-
-      const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
-      window.open(url, "_blank");
-    }
-
-    /* ===== Arranque ===== */
-    document.getElementById("fecha").value = todayISODate();
-
-    $('#btnAgregar').addEventListener('click', agregarProducto);
-    $('#btnAgregarDev').addEventListener('click', agregarDevuelto);
-
-    async function iniciar(){
-      const f = fechaSeleccionada();
-      await cargarDia(f);
-      await conectarRealtime(f);
-    }
-
-    $('#fecha').addEventListener('change', async ()=>{
-      const f = fechaSeleccionada();
-      await cargarDia(f);
-      await conectarRealtime(f);
+<div class="container">
+
+<h1>
+  Registro Mostrador VDC 360° matrix
+  <span id="rt" class="pill">REAL TIME</span>
+</h1>
+
+<label>Fecha:
+  <input type="date" id="fecha">
+</label>
+
+<label>Producto:
+  <select id="producto">
+    <option value="">Seleccionar</option>
+    <option>Cabeza Congelada</option>
+    <option>Cabeza de Rastro</option>
+    <option>Cabeza de res</option>
+    <option>Cabeza sin lengua</option>
+    <option>Caja Excel</option>
+    <option>Caja Menudo National</option>
+    <option>Caja Menudo Swift</option>
+    <option>Caja Washington</option>
+    <option>Caja de tripa</option>
+    <option>Caja menudo vísceras</option>
+    <option>Corazon</option>
+    <option>Higado</option>
+    <option>Lengua</option>
+    <option>Libro</option>
+    <option>Menudo Canadian</option>
+    <option>Nana</option>
+    <option>Panza</option>
+    <option>Pata Blanca</option>
+    <option>Pata Morena</option>
+    <option>Quajo</option>
+    <option>Sebo</option>
+    <option>Teleco</option>
+    <option>Tripa</option>
+    <option>Tripa Gorda</option>
+    <option>Tripa de Rastro</option>
+    <option>Tripa de rastro</option>
+    <option>Producto Libre</option>
+  </select>
+</label>
+
+<label>Kilos:
+  <input type="number" id="kilos" step="0.01">
+</label>
+
+<label>Piezas:
+  <input type="number" id="piezas">
+</label>
+
+<label>Origen:
+  <input type="text" id="origen">
+</label>
+
+<label>¿Es congelado?
+  <select id="congelado">
+    <option>No</option>
+    <option>Sí</option>
+  </select>
+</label>
+
+<button id="btnAgregar">Agregar producto</button>
+
+<h2 class="subtitulo">Productos enviados</h2>
+<table id="tablaEnviados">
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Kilos</th>
+      <th>Piezas</th>
+      <th>Origen</th>
+      <th>Congelado</th>
+      <th>Acción</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<h2 class="subtitulo">Resumen del día</h2>
+<table id="tablaResumen">
+  <thead>
+    <tr>
+      <th>Producto</th>
+      <th>Kilos</th>
+      <th>Piezas</th>
+    </tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
+<div style="height:260px; margin-top:20px;">
+  <canvas id="chartResumen"></canvas>
+</div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+<script>
+/* ================= SUPABASE ================= */
+const SUPABASE_URL = "https://eqynjddcosvdqjzztznn.supabase.co";
+const SUPABASE_KEY = "TU_ANON_KEY_AQUI";
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+/* ================= UTILIDADES ================= */
+const $ = s => document.querySelector(s);
+const num = v => Number(v)||0;
+
+function today(){
+  const d = new Date(); d.setMinutes(d.getMinutes()-d.getTimezoneOffset());
+  return d.toISOString().slice(0,10);
+}
+
+/* 🔤 ORDENAR PRODUCTOS */
+function ordenarSelectAlfabeticamente(id){
+  const select = document.getElementById(id);
+  const options = Array.from(select.options);
+  const first = options.shift();
+  options.sort((a,b)=>a.text.localeCompare(b.text,'es',{sensitivity:'base'}));
+  select.innerHTML='';
+  select.appendChild(first);
+  options.forEach(o=>select.appendChild(o));
+}
+
+/* ================= ESTADO ================= */
+let enviados = [];
+let chart = null;
+
+/* ================= RENDER ================= */
+function render(){
+  const tbody = $('#tablaEnviados tbody');
+  tbody.innerHTML = enviados.map(e=>`
+    <tr>
+      <td>${e.producto}</td>
+      <td>${e.kilos.toFixed(2)}</td>
+      <td>${e.piezas}</td>
+      <td>${e.origen}</td>
+      <td>${e.congelado}</td>
+      <td><button onclick="eliminar('${e.id}')">Eliminar</button></td>
+    </tr>`).join('');
+
+  const resumen = {};
+  enviados.forEach(e=>{
+    if(!resumen[e.producto]) resumen[e.producto]={k:0,p:0};
+    resumen[e.producto].k+=e.kilos;
+    resumen[e.producto].p+=e.piezas;
+  });
+
+  const rows = Object.entries(resumen).map(([k,v])=>({producto:k,...v}));
+
+  $('#tablaResumen tbody').innerHTML = rows.map(r=>`
+    <tr>
+      <td>${r.producto}</td>
+      <td>${r.k.toFixed(2)}</td>
+      <td>${r.p}</td>
+    </tr>`).join('');
+
+  const labels = rows.map(r=>r.producto);
+  const kilos = rows.map(r=>r.k);
+  const piezas = rows.map(r=>r.p);
+
+  if(chart){
+    chart.data.labels=labels;
+    chart.data.datasets[0].data=kilos;
+    chart.data.datasets[1].data=piezas;
+    chart.update();
+  }else{
+    chart = new Chart($('#chartResumen'),{
+      type:'bar',
+      data:{labels,
+        datasets:[
+          {label:'Kilos',data:kilos},
+          {label:'Piezas',data:piezas}
+        ]}
     });
+  }
+}
 
-    iniciar();
-  </script>
+/* ================= EVENTOS ================= */
+$('#btnAgregar').onclick = async ()=>{
+  const row = {
+    fecha: $('#fecha').value,
+    producto: $('#producto').value,
+    kilos: num($('#kilos').value),
+    piezas: num($('#piezas').value),
+    origen: $('#origen').value,
+    congelado: $('#congelado').value
+  };
+
+  const {data} = await sb.from('mostrador_enviados').insert(row).select().single();
+  enviados.unshift(data);
+  render();
+};
+
+/* ================= INIT ================= */
+$('#fecha').value = today();
+ordenarSelectAlfabeticamente('producto');
+</script>
+
 </body>
 </html>
