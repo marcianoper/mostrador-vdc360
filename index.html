@@ -4,10 +4,11 @@
   <meta charset="UTF-8" />
   <title>Registro Mostrador VDC 360°</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+
   <style>
     body { font-family: sans-serif; background:#f2f2f2; padding:20px; }
     .container { background:#fff; padding:30px; border-radius:10px; max-width:900px; margin:auto; }
-    h1 { color:green; }
+    h1 { color:green; display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
     label { display:block; margin-top:15px; }
     input, select { width:100%; padding:10px; margin-top:5px; }
     button { margin-top:20px; padding:12px; background:#1f6f26; color:#fff; border:none; border-radius:5px; cursor:pointer; width:100%; font-weight:bold; }
@@ -16,12 +17,20 @@
     th { background:#1f6f26; color:#fff; }
     .subtitulo { font-size:22px; font-weight:bold; margin-top:40px; }
     .hint { font-size:12px; color:#555; margin-top:8px; }
-    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef7ef; color:#1f6f26; font-weight:700; font-size:12px; }
+    .pill { display:inline-block; padding:4px 10px; border-radius:999px; background:#eef7ef; color:#1f6f26; font-weight:800; font-size:12px; }
+    .pill.off { background:#fff1f2; color:#b91c1c; }
+    .row2 { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+    @media (max-width:720px){ .row2{ grid-template-columns:1fr; } }
+    canvas{ width:100%; }
   </style>
 </head>
+
 <body>
   <div class="container">
-    <h1>Registro Mostrador VDC 360° matrix <span id="rt" class="pill">REAL TIME</span></h1>
+    <h1>
+      Registro Mostrador VDC 360° matrix
+      <span id="rt" class="pill">REAL TIME</span>
+    </h1>
     <div class="hint">Todo lo que agregues/eliminés se sincroniza en vivo en otros dispositivos abiertos en la misma fecha.</div>
 
     <label>Fecha:
@@ -62,13 +71,15 @@
       </select>
     </label>
 
-    <label>Kilos:
-      <input type="number" id="kilos" step="0.01" />
-    </label>
+    <div class="row2">
+      <label>Kilos:
+        <input type="number" id="kilos" step="0.01" />
+      </label>
 
-    <label>Piezas (opcional):
-      <input type="number" id="piezas" />
-    </label>
+      <label>Piezas (opcional):
+        <input type="number" id="piezas" />
+      </label>
+    </div>
 
     <label>Origen:
       <input type="text" id="origen" placeholder="Ej: rastro / limpieza / congelado" />
@@ -83,7 +94,7 @@
 
     <button id="btnAgregar">Agregar producto</button>
 
-    <h2 class="subtitulo">Productos enviados</h2>
+    <h2 class="subtitulo">Productos enviados (lo más nuevo arriba)</h2>
     <table id="tablaEnviados">
       <thead>
         <tr>
@@ -98,7 +109,8 @@
       <tbody></tbody>
     </table>
 
-    <h2 class="subtitulo">Productos devueltos</h2>
+    <h2 class="subtitulo">Productos devueltos (lo más nuevo arriba)</h2>
+
     <label>Producto devuelto:
       <input type="text" id="productoDevuelto" />
     </label>
@@ -120,11 +132,29 @@
       <tbody></tbody>
     </table>
 
+    <h2 class="subtitulo">Resumen del día (kilos y piezas)</h2>
+    <table id="tablaResumen">
+      <thead>
+        <tr>
+          <th>Producto</th>
+          <th>Kilos</th>
+          <th>Piezas</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <div style="height:260px; margin-top:16px;">
+      <canvas id="chartResumen"></canvas>
+    </div>
+
     <button onclick="enviarWhatsApp()">Enviar resumen a WhatsApp</button>
   </div>
 
   <!-- Supabase JS (UMD) -->
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
   <script>
     /* ===== CONFIG SUPABASE ===== */
@@ -138,10 +168,9 @@
     const T_ENVIADOS = "mostrador_enviados";
     const T_DEVUELTOS = "mostrador_devueltos";
 
-    /* ===== Estado en memoria ===== */
-    let enviados = [];   // [{id, producto, kilos, piezas, origen, congelado}]
-    let devueltos = [];  // [{id, producto, kilos}]
-
+    /* ===== Estado ===== */
+    let enviados = [];   // [{id, producto, kilos, piezas, origen, congelado, created_at}]
+    let devueltos = [];  // [{id, producto, kilos, created_at}]
     let rtChannel = null;
 
     const $ = (s)=>document.querySelector(s);
@@ -162,6 +191,16 @@
       return Number.isFinite(n) ? n : 0;
     }
 
+    function escapeHtml(str){
+      return String(str ?? '')
+        .replaceAll('&','&amp;')
+        .replaceAll('<','&lt;')
+        .replaceAll('>','&gt;')
+        .replaceAll('"','&quot;')
+        .replaceAll("'","&#039;");
+    }
+
+    /* ===== Render tablas ===== */
     function renderTablaEnviados() {
       const tbody = document.querySelector("#tablaEnviados tbody");
       tbody.innerHTML = enviados.map((item) => `
@@ -185,34 +224,90 @@
         </tr>`).join('');
     }
 
-    function escapeHtml(str){
-      return String(str ?? '')
-        .replaceAll('&','&amp;')
-        .replaceAll('<','&lt;')
-        .replaceAll('>','&gt;')
-        .replaceAll('"','&quot;')
-        .replaceAll("'","&#039;");
+    /* ===== Resumen + chart ===== */
+    function buildResumen(){
+      const map = new Map();
+      for(const r of enviados){
+        const k = r.producto;
+        if(!map.has(k)) map.set(k, { producto:k, kilos:0, piezas:0 });
+        const o = map.get(k);
+        o.kilos += num(r.kilos);
+        o.piezas += parseInt(r.piezas||0,10);
+      }
+      return Array.from(map.values()).sort((a,b)=>b.kilos-a.kilos);
     }
 
-    /* ===== Carga inicial por fecha ===== */
+    function renderResumen(){
+      const rows = buildResumen();
+      const tbody = document.querySelector("#tablaResumen tbody");
+      tbody.innerHTML = rows.map(r=>`
+        <tr>
+          <td>${escapeHtml(r.producto)}</td>
+          <td>${r.kilos.toFixed(2)}</td>
+          <td>${r.piezas}</td>
+        </tr>
+      `).join('');
+    }
+
+    let chartResumen = null;
+    function renderChart(){
+      const rows = buildResumen();
+      const labels = rows.map(r=>r.producto);
+      const kilos = rows.map(r=>Number(r.kilos.toFixed(2)));
+      const piezas = rows.map(r=>r.piezas);
+
+      const canvas = document.getElementById('chartResumen');
+      if(!canvas) return;
+
+      if(chartResumen){
+        chartResumen.data.labels = labels;
+        chartResumen.data.datasets[0].data = kilos;
+        chartResumen.data.datasets[1].data = piezas;
+        chartResumen.update();
+        return;
+      }
+
+      chartResumen = new Chart(canvas, {
+        type: 'bar',
+        data: {
+          labels,
+          datasets: [
+            { label: 'Kilos', data: kilos },
+            { label: 'Piezas', data: piezas }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          scales: { y: { beginAtZero: true } }
+        }
+      });
+    }
+
+    function renderAll(){
+      renderTablaEnviados();
+      renderTablaDevueltos();
+      renderResumen();
+      renderChart();
+    }
+
+    /* ===== Cargar día (nuevo arriba) ===== */
     async function cargarDia(fecha){
       if(!sb) { alert("No cargó Supabase. Revisa el CDN o internet."); return; }
 
-      // Enviados
       const { data: env, error: e1 } = await sb
         .from(T_ENVIADOS)
-        .select("id, producto, kilos, piezas, origen, congelado")
+        .select("id, producto, kilos, piezas, origen, congelado, created_at")
         .eq("fecha", fecha)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if(e1){ console.error(e1); }
 
-      // Devueltos
       const { data: dev, error: e2 } = await sb
         .from(T_DEVUELTOS)
-        .select("id, producto, kilos")
+        .select("id, producto, kilos, created_at")
         .eq("fecha", fecha)
-        .order("created_at", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if(e2){ console.error(e2); }
 
@@ -222,31 +317,29 @@
         kilos:+x.kilos,
         piezas:+(x.piezas||0),
         origen:x.origen,
-        congelado:x.congelado
+        congelado:x.congelado,
+        created_at:x.created_at
       }));
 
       devueltos = (dev || []).map(x=>({
         id:x.id,
         producto:x.producto,
-        kilos:+x.kilos
+        kilos:+x.kilos,
+        created_at:x.created_at
       }));
 
-      renderTablaEnviados();
-      renderTablaDevueltos();
+      renderAll();
     }
 
-    /* ===== Realtime (suscripción por fecha) ===== */
+    /* ===== Realtime ===== */
     async function conectarRealtime(fecha){
       if(!sb) return;
 
-      // cerrar canal anterior
       if(rtChannel){
         try { await sb.removeChannel(rtChannel); } catch(e){}
         rtChannel = null;
       }
 
-      // IMPORTANTE: filtros por fecha
-      // Nota: supabase realtime filtra por "fecha=eq.YYYY-MM-DD"
       rtChannel = sb.channel(`mostrador-rt-${fecha}`);
 
       rtChannel
@@ -254,17 +347,17 @@
           { event: 'INSERT', schema: 'public', table: T_ENVIADOS, filter: `fecha=eq.${fecha}` },
           (payload)=>{
             const r = payload.new;
-            // evitar duplicados
             if(enviados.some(x=>x.id===r.id)) return;
-            enviados.push({
+            enviados.unshift({
               id:r.id,
               producto:r.producto,
               kilos:+r.kilos,
               piezas:+(r.piezas||0),
               origen:r.origen,
-              congelado:r.congelado
+              congelado:r.congelado,
+              created_at:r.created_at
             });
-            renderTablaEnviados();
+            renderAll();
           }
         )
         .on('postgres_changes',
@@ -273,7 +366,7 @@
             const id = payload.old?.id;
             if(!id) return;
             enviados = enviados.filter(x=>x.id!==id);
-            renderTablaEnviados();
+            renderAll();
           }
         )
         .on('postgres_changes',
@@ -281,8 +374,8 @@
           (payload)=>{
             const r = payload.new;
             if(devueltos.some(x=>x.id===r.id)) return;
-            devueltos.push({ id:r.id, producto:r.producto, kilos:+r.kilos });
-            renderTablaDevueltos();
+            devueltos.unshift({ id:r.id, producto:r.producto, kilos:+r.kilos, created_at:r.created_at });
+            renderAll();
           }
         )
         .on('postgres_changes',
@@ -291,20 +384,26 @@
             const id = payload.old?.id;
             if(!id) return;
             devueltos = devueltos.filter(x=>x.id!==id);
-            renderTablaDevueltos();
+            renderAll();
           }
         );
 
-      const status = await rtChannel.subscribe((s)=>{
-        // s: 'SUBSCRIBED' | 'TIMED_OUT' | 'CLOSED' | 'CHANNEL_ERROR'
+      await rtChannel.subscribe((s)=>{
         const pill = $('#rt');
         if(!pill) return;
-        if(s === 'SUBSCRIBED'){ pill.textContent = 'REAL TIME'; }
-        else { pill.textContent = 'RT: ' + s; }
+        if(s === 'SUBSCRIBED'){
+          pill.textContent = 'REAL TIME';
+          pill.classList.remove('off');
+        }else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){
+          pill.textContent = 'RT: ' + s;
+          pill.classList.add('off');
+        }else{
+          pill.textContent = 'RT: ' + s;
+        }
       });
     }
 
-    /* ===== Agregar / Eliminar (ahora va a Supabase) ===== */
+    /* ===== Optimistic UI inserts ===== */
     async function agregarProducto() {
       const fecha = fechaSeleccionada();
       const producto = $('#producto').value;
@@ -327,17 +426,33 @@
         congelado
       };
 
-      const { error } = await sb.from(T_ENVIADOS).insert(row);
+      const { data, error } = await sb
+        .from(T_ENVIADOS)
+        .insert(row)
+        .select("id, producto, kilos, piezas, origen, congelado, created_at")
+        .single();
+
       if(error){
         console.error(error);
-        alert("No se pudo guardar. Revisa internet o políticas RLS.");
+        alert("No se pudo guardar. Revisa internet o políticas RLS / Realtime.");
         return;
       }
 
-      // limpiar inputs (opcional)
+      if(!enviados.some(x=>x.id===data.id)){
+        enviados.unshift({
+          id:data.id,
+          producto:data.producto,
+          kilos:+data.kilos,
+          piezas:+(data.piezas||0),
+          origen:data.origen,
+          congelado:data.congelado,
+          created_at:data.created_at
+        });
+        renderAll();
+      }
+
       $('#kilos').value = '';
       $('#piezas').value = '';
-      // NO hacemos push manual: Realtime lo mete solo (así siempre coincide)
     }
 
     async function agregarDevuelto() {
@@ -351,11 +466,22 @@
       }
 
       const row = { fecha, producto, kilos: Number(parseFloat(kilos).toFixed(2)) };
-      const { error } = await sb.from(T_DEVUELTOS).insert(row);
+
+      const { data, error } = await sb
+        .from(T_DEVUELTOS)
+        .insert(row)
+        .select("id, producto, kilos, created_at")
+        .single();
+
       if(error){
         console.error(error);
-        alert("No se pudo guardar devuelto. Revisa internet o RLS.");
+        alert("No se pudo guardar devuelto. Revisa internet o RLS / Realtime.");
         return;
+      }
+
+      if(!devueltos.some(x=>x.id===data.id)){
+        devueltos.unshift({ id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at });
+        renderAll();
       }
 
       $('#productoDevuelto').value = '';
@@ -369,7 +495,7 @@
         console.error(error);
         alert("No se pudo eliminar. Revisa internet o RLS.");
       }
-      // Realtime actualizará la tabla
+      // Realtime hará el update (y si no llega, igual se verá tras recarga)
     }
 
     async function eliminarDevuelto(id) {
@@ -381,7 +507,7 @@
       }
     }
 
-    /* ===== WhatsApp (igual que tu lógica, pero usando arrays actuales) ===== */
+    /* ===== WhatsApp ===== */
     function enviarWhatsApp() {
       const fecha = fechaSeleccionada();
 
