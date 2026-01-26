@@ -219,6 +219,121 @@
       options.forEach(opt => select.appendChild(opt));
     }
 
+    /* =========================================================
+       ✅ NUEVO: AUTOFILL (producto -> origen/congelado/kilos)
+       - Sin bloquear: siempre puedes editar después.
+       - Reglas:
+         * Lista "Viaje" => origen=Viaje, congelado=No
+         * Menudo Canadian => origen=Promerca, congelado=Sí
+         * Caja Menudo National => origen=Congelado, congelado=Sí
+         * Caja Washington => origen=Daniel, congelado=Sí
+         * Lengua => origen=Anglo, congelado=Sí
+         * Cajas con peso fijo 27.22 => kilos = piezas * 27.22 (si hay piezas)
+    ========================================================= */
+
+    const PESO_CAJA_2722 = 27.22;
+
+    // Normaliza textos para comparar sin broncas (mayúsculas/acentos/espacios)
+    function norm(s){
+      return String(s||'')
+        .trim()
+        .toLowerCase()
+        .normalize('NFD').replace(/[\u0300-\u036f]/g,''); // quita acentos
+    }
+
+    // Productos que SIEMPRE son de "Viaje" y NO congelados
+    const PRODUCTOS_VIAJE = new Set([
+      "bofe",
+      "cabeza de res",
+      "cabeza de rastro",
+      "cabeza sin lengua",
+      "corazon",
+      "higado",
+      "libro",
+      "nana",
+      "panza",
+      "pata blanca",
+      "pata morena",
+      "cuajo",
+      "quajo",       // por como está en tu select
+      "sebo",
+      "teleco",
+      "tripa",
+      "tripa de rastro",
+      "tripa gorda",
+      "tripa de rastro" // (por si llega así)
+    ].map(norm));
+
+    // Reglas específicas por producto
+    const REGLAS_PRODUCTO = new Map([
+      [norm("Menudo Canadian"),     { origen: "Promerca", congelado: "Sí" }],
+      [norm("Caja Menudo National"),{ origen: "Congelado", congelado: "Sí" }],
+      [norm("Caja Washington"),     { origen: "Daniel",   congelado: "Sí" }],
+      [norm("Lengua"),             { origen: "Anglo",    congelado: "Sí" }]
+    ]);
+
+    // Productos con peso fijo por pieza/caja
+    // (Para tu caso: Menudo Canadian, Caja Menudo National, Caja Washington)
+    const PRODUCTOS_PESO_FIJO_2722 = new Set([
+      norm("Menudo Canadian"),
+      norm("Caja Menudo National"),
+    ]);
+
+    // Control: si el usuario ya editó manualmente, no lo pisamos a la fuerza
+    const touched = { origen:false, congelado:false, kilos:false };
+
+    function markTouched(){
+      const o = $('#origen'), c = $('#congelado'), k = $('#kilos');
+      if(o) o.addEventListener('input', ()=> touched.origen = true);
+      if(c) c.addEventListener('change', ()=> touched.congelado = true);
+      if(k) k.addEventListener('input', ()=> touched.kilos = true);
+    }
+
+    function setIfNotTouched(field, value){
+      if(field === 'origen' && !touched.origen) $('#origen').value = value;
+      if(field === 'congelado' && !touched.congelado) $('#congelado').value = value;
+      if(field === 'kilos' && !touched.kilos) $('#kilos').value = value;
+    }
+
+    function aplicarAutofillPorProducto(){
+      const productoRaw = $('#producto')?.value || '';
+      const p = norm(productoRaw);
+
+      // Reset "touched" cuando cambias de producto (para que el autofill ayude de nuevo)
+      touched.origen = false;
+      touched.congelado = false;
+      touched.kilos = false;
+
+      // 1) Reglas específicas ganan
+      if(REGLAS_PRODUCTO.has(p)){
+        const r = REGLAS_PRODUCTO.get(p);
+        setIfNotTouched('origen', r.origen);
+        setIfNotTouched('congelado', r.congelado);
+      } else if(PRODUCTOS_VIAJE.has(p)){
+        // 2) Lista viaje
+        setIfNotTouched('origen', 'Viaje');
+        setIfNotTouched('congelado', 'No');
+      }
+      // 3) Si es producto libre o no cae en reglas, no hacemos nada.
+
+      // 4) Si es de peso fijo, y ya hay piezas, calcula kilos
+      recalcularKilosSiAplica();
+    }
+
+    function recalcularKilosSiAplica(){
+      const productoRaw = $('#producto')?.value || '';
+      const p = norm(productoRaw);
+
+      if(!PRODUCTOS_PESO_FIJO_2722.has(p)) return;
+
+      const piezas = num($('#piezas')?.value);
+      if(!piezas) return;
+
+      const kilosCalc = (piezas * PESO_CAJA_2722);
+      // solo autopone kilos si no lo tocaron manualmente
+      setIfNotTouched('kilos', kilosCalc.toFixed(2));
+    }
+
     /* ===== Render tablas ===== */
     function renderTablaEnviados() {
       const tbody = document.querySelector("#tablaEnviados tbody");
@@ -572,6 +687,19 @@
     // ✅ Ordenar productos al cargar
     ordenarSelectAlfabeticamente('producto');
 
+    // ✅ NUEVO: marcar campos tocados
+    markTouched();
+
+    // ✅ NUEVO: autofill cuando cambia el producto
+    $('#producto').addEventListener('change', aplicarAutofillPorProducto);
+
+    // ✅ NUEVO: recalcular kilos cuando cambian piezas (solo en productos con peso fijo)
+    $('#piezas').addEventListener('input', ()=>{
+      // si el usuario cambia piezas, dejamos que el sistema calcule kilos de nuevo
+      touched.kilos = false;
+      recalcularKilosSiAplica();
+    });
+
     $('#btnAgregar').addEventListener('click', agregarProducto);
     $('#btnAgregarDev').addEventListener('click', agregarDevuelto);
 
@@ -579,6 +707,9 @@
       const f = fechaSeleccionada();
       await cargarDia(f);
       await conectarRealtime(f);
+
+      // aplica autofill si ya hay producto seleccionado por default (siempre vacío, pero por si acaso)
+      aplicarAutofillPorProducto();
     }
 
     $('#fecha').addEventListener('change', async ()=>{
