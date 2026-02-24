@@ -937,28 +937,32 @@
         devueltos[idx] = { id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at };
       }
 
-      // ✅ Ajuste inventario (DEVOLUCION editada): delta nuevo-anterior
-      const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
-      if(Math.abs(deltaKg) > 0.0001 || payload.producto !== before.producto){
-        if(payload.producto !== before.producto){
+      // ✅ Ajuste inventario (DEVOLUCION resta inventario):
+      // delta inventario = -(nuevo - anterior)
+      const deltaKg = Number(payload.kilos || 0) - Number(before.kilos || 0);
+
+      if (Math.abs(deltaKg) > 0.0001 || payload.producto !== before.producto) {
+        if (payload.producto !== before.producto) {
+          // Revertir efecto anterior (fue -before.kilos) => sumar +before.kilos
           await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
-            items: buildItem(before.producto, -Number(before.kilos||0), 0)
+            tipo: "AJUSTE",
+            origen: "mostrador",
+            ref: `AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
+            items: buildItem(before.producto, +Number(before.kilos || 0), 0)
           });
+          // Aplicar nuevo efecto (restar -payload.kilos)
           await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
-            items: buildItem(payload.producto, Number(payload.kilos||0), 0)
+            tipo: "AJUSTE",
+            origen: "mostrador",
+            ref: `AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
+            items: buildItem(payload.producto, -Number(payload.kilos || 0), 0)
           });
         } else {
           await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-${fechaSeleccionada()}-${id}`,
-            items: buildItem(payload.producto, deltaKg, 0)
+            tipo: "AJUSTE",
+            origen: "mostrador",
+            ref: `AJU-DEV-${fechaSeleccionada()}-${id}`,
+            items: buildItem(payload.producto, -deltaKg, 0)
           });
         }
       }
@@ -1347,12 +1351,12 @@
       return;
     }
 
-    // ✅ Movimiento inventario (DEVOLUCION)
+    // ✅ Movimiento inventario (DEVOLUCION) -> RESTA inventario real (kg NEGATIVOS)
     await pushMovimiento({
       tipo: "DEVOLUCION",
       origen: "mostrador",
       ref: `DEV-${fecha}-${data.id}`,
-      items: buildItem(producto, row.kilos, 0)
+      items: buildItem(producto, -row.kilos, 0)
     });
 
     if(!devueltos.some(x=>x.id===data.id)){
@@ -1394,12 +1398,12 @@
       return;
     }
 
-    // ✅ Revertir el efecto de la devolución (AJUSTE negativo)
+    // ✅ Revertir efecto de la devolución (la devolución restó, entonces al borrar SUMAMOS)
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: "mostrador",
       ref: `DELDEV-${fechaSeleccionada()}-${id}`,
-      items: buildItem(row.producto, -Number(row.kilos||0), 0)
+      items: buildItem(row.producto, +Number(row.kilos || 0), 0)
     });
 
     const { error } = await sb.from(T_DEVUELTOS).delete().eq('id', id);
