@@ -340,21 +340,19 @@
       <div class="barRight">
         <a class="btnLink" href="https://marcianoper.github.io/vdc-central/">← VDC Central</a>
         <span id="rt" class="pill ok">REAL TIME</span>
-        <span id="stockPill" class="pill">Stock: listo</span>
       </div>
     </div>
   </div>
 </header>
 
 <main class="wrap">
-
   <div class="grid">
 
     <section class="card">
       <div class="cardHead">
         <div>
           <h2>Captura de producto enviado</h2>
-          <p>Todo lo que agregues/eliminés se sincroniza en vivo en otros dispositivos abiertos en la misma fecha.</p>
+          <p>✅ Opción A: esta página NO toca stock_mostrador. Solo crea movimientos (ledger) y Supabase actualiza el stock.</p>
         </div>
       </div>
 
@@ -402,15 +400,12 @@
         <div class="row2">
           <label>Kilos
             <input type="number" id="kilos" step="0.01" />
-
             <div class="pesoBox">
               <button id="btnPeso" type="button" class="pesoBtn">📥 Tomar peso</button>
-
               <span class="pesoToggle">
                 <input type="checkbox" id="rtPesoToggle" />
                 <span>Peso Real-time</span>
               </span>
-
               <span id="pesoStatus" class="pesoStatus">Báscula: esperando…</span>
             </div>
           </label>
@@ -439,13 +434,12 @@
       <div class="cardHead">
         <div>
           <h2>Productos devueltos</h2>
-          <p>✅ Al agregar devuelto, se descuenta también del <b>stock_mostrador</b> (inventario real).</p>
+          <p>✅ Opción A: al agregar/eliminar/editar devueltos, solo se registran movimientos; Supabase actualiza stock.</p>
         </div>
       </div>
 
       <div class="form">
         <label>Producto devuelto
-          <!-- 👇 Recomendación: usar select para que el SKU siempre exista -->
           <select id="productoDevuelto">
             <option value="">Seleccionar</option>
             <option value="Caja menudo vísceras">Caja menudo vísceras</option>
@@ -485,12 +479,9 @@
         </label>
 
         <button id="btnAgregarDev" class="btn dark">↩️ Agregar devuelto</button>
-
         <button onclick="enviarWhatsApp()" class="btn">📲 Enviar resumen a WhatsApp</button>
 
-        <div class="hint">
-          Tip: puedes abrir esta página en una tablet y dejarla fija todo el día.
-        </div>
+        <div class="hint">Tip: puedes abrir esta página en una tablet y dejarla fija todo el día.</div>
       </div>
     </section>
 
@@ -564,10 +555,7 @@
     </div>
   </section>
 
-  <footer>
-    VDC 360° · Mostrador · Marciano mode ✅
-  </footer>
-
+  <footer>VDC 360° · Mostrador · Marciano mode ✅</footer>
 </main>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -588,12 +576,8 @@
   const T_BASCULA = "bascula_live";
   const BASCULA_ID = "torrey_1";
 
-  /* ====== INVENTARIO (ledger opcional) ====== */
+  /* ✅ Ledger: aquí disparan tus triggers hacia stock_mostrador */
   const T_MOV = "movimientos_inventario";
-
-  /* ✅ TABLA REAL DE INVENTARIO MOSTRADOR (la que ve tu dashboard) */
-  const T_STOCK = "stock_mostrador";
-  const RPC_APPLY_DELTA = "apply_stock_delta";
 
   // Mapa producto->SKU (estable)
   const SKU_MAP = {
@@ -627,14 +611,13 @@
     "Lengua":                 "LENGUA",
     "Caja de tripa":          "CAJA_TRIPA",
     "Caja Menudo Swift":      "CAJA_MENUDO_SWIFT",
-    "Menudo sucio":           "MENUDO_SUCI0"   // <- si esto fue typo y debe ser MENUDO_SUCIO cámbialo
+    "Menudo sucio":           "MENUDO_SUCIO"   /* ← corregido */
   };
 
   function toSku(producto){
     const key = String(producto || "").trim();
     return SKU_MAP[key] || key.toUpperCase().replace(/\s+/g, "_");
   }
-
   function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
 
   function buildItem(producto, kilos, piezas){
@@ -645,10 +628,15 @@
     }];
   }
 
+  /* ✅ Idempotente: upsert con (tipo, ref) único */
   async function pushMovimiento({ tipo, origen, ref, items }){
     if(!sb) return { ok:false, error:"No Supabase client" };
     const payload = { tipo, origen: origen || "mostrador", ref: ref || "", items: items || [] };
-    const { error } = await sb.from(T_MOV).insert(payload);
+
+    const { error } = await sb
+      .from(T_MOV)
+      .upsert(payload, { onConflict: "tipo,ref", ignoreDuplicates: true });
+
     if(error){
       console.error("Movimiento error:", error);
       return { ok:false, error: error.message };
@@ -656,52 +644,12 @@
     return { ok:true };
   }
 
-  /* ===========================
-     ✅ STOCK REAL (stock_mostrador)
-     deltaKg:
-       +  = entra al mostrador (envío)
-       -  = sale del mostrador (devolución / venta / ajuste)
-  =========================== */
-  function setStockPill(msg, ok=true){
-    const el = document.getElementById("stockPill");
-    if(!el) return;
-    el.textContent = msg;
-    el.classList.remove("ok","bad");
-    el.classList.add(ok ? "ok" : "bad");
-  }
-
-  async function applyStockDeltaByProducto(producto, deltaKg){
-    if(!sb) return;
-    const sku = toSku(producto);
-    const delta = Number(deltaKg || 0);
-    if(!sku || !Number.isFinite(delta) || Math.abs(delta) < 0.0001) return;
-
-    setStockPill("Stock: aplicando…", true);
-    const { error } = await sb.rpc(RPC_APPLY_DELTA, { p_sku: sku, p_delta: delta });
-
-    if(error){
-      console.error("apply_stock_delta error:", error);
-      setStockPill("Stock: error", false);
-      alert("No se pudo actualizar stock_mostrador. Revisa que exista la RPC apply_stock_delta y RLS.");
-      return;
-    }
-    setStockPill(`Stock: OK (${sku} ${delta>0?'+':''}${delta.toFixed(2)})`, true);
-  }
-
-  /* ===== Helpers DOM ===== */
   let enviados = [];
   let devueltos = [];
   let rtChannel = null;
   let chBascula = null;
-
   const $ = (s)=>document.querySelector(s);
 
-  function escapeHtml(str){
-    return String(str ?? '')
-      .replaceAll('&','&amp;').replaceAll('<','&lt;')
-      .replaceAll('>','&gt;').replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
   function todayISODate(){
     const d = new Date();
     const off = d.getTimezoneOffset();
@@ -710,7 +658,14 @@
   }
   function fechaSeleccionada(){ return $('#fecha')?.value || todayISODate(); }
 
-  /* ======= Báscula (igual) ======= */
+  function escapeHtml(str){
+    return String(str ?? '')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;')
+      .replaceAll('>','&gt;').replaceAll('"','&quot;')
+      .replaceAll("'","&#039;");
+  }
+
+  /* ======= Báscula ======= */
   function setPesoStatus(msg, ok=true){
     const el = $('#pesoStatus');
     if(!el) return;
@@ -726,8 +681,6 @@
     const cur = Number(k.value || 0);
     if(Math.abs(cur - next) < 0.001) return;
     k.value = next.toFixed(2);
-    k.dispatchEvent(new Event('input', { bubbles:true }));
-    k.dispatchEvent(new Event('change', { bubbles:true }));
   }
   async function leerBasculaOnce(){
     if(!sb){ alert("No cargó Supabase. Revisa el CDN o internet."); return; }
@@ -804,7 +757,7 @@
     options.forEach(opt => select.appendChild(opt));
   }
 
-  /* ===== Autofill (igual) ===== */
+  /* ===== Autofill ===== */
   const PESO_CAJA_2722 = 27.22;
   function norm(s){
     return String(s||'').trim().toLowerCase()
@@ -858,7 +811,7 @@
   }
 
   /* ===========================
-     ✅ EDICIÓN INLINE (con ajuste stock real)
+     ✅ EDICIÓN INLINE (solo ledger)
   =========================== */
   const editState = { envi: new Map(), dev: new Map() };
 
@@ -941,29 +894,34 @@
         };
       }
 
-      // ✅ Ajuste STOCK REAL (ENVIO): delta = nuevo - anterior
+      /* ✅ Ledger: el ENVIO ya existe; aquí registramos AJUSTE por diferencia */
       if(payload.producto !== before.producto){
-        // revertir producto anterior
-        await applyStockDeltaByProducto(before.producto, -Number(before.kilos||0));
-        // aplicar producto nuevo
-        await applyStockDeltaByProducto(payload.producto, Number(payload.kilos||0));
+        await pushMovimiento({
+          tipo:"AJUSTE",
+          origen: payload.origen || "mostrador",
+          ref: `AJU-CHG-${fechaSeleccionada()}-${id}`,
+          items: buildItem(before.producto, -Number(before.kilos||0), -Number(before.piezas||0))
+        });
+        await pushMovimiento({
+          tipo:"AJUSTE",
+          origen: payload.origen || "mostrador",
+          ref: `AJU-CHG-${fechaSeleccionada()}-${id}-NEW`,
+          items: buildItem(payload.producto, Number(payload.kilos||0), Number(payload.piezas||0))
+        });
       } else {
         const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
-        await applyStockDeltaByProducto(payload.producto, deltaKg);
-      }
-
-      // (opcional) ledger
-      const deltaKgLedger = Number(payload.kilos||0) - Number(before.kilos||0);
-      const deltaPzLedger = Number(payload.piezas||0) - Number(before.piezas||0);
-      if(payload.producto !== before.producto){
-        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(before.producto, -Number(before.kilos||0), -Number(before.piezas||0)) });
-        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, Number(payload.kilos||0), Number(payload.piezas||0)) });
-      } else if(Math.abs(deltaKgLedger) > 0.0001 || Math.abs(deltaPzLedger) > 0.0001){
-        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, deltaKgLedger, deltaPzLedger) });
+        const deltaPz = Number(payload.piezas||0) - Number(before.piezas||0);
+        if(Math.abs(deltaKg) > 0.0001 || Math.abs(deltaPz) > 0.0001){
+          await pushMovimiento({
+            tipo:"AJUSTE",
+            origen: payload.origen || "mostrador",
+            ref: `AJU-${fechaSeleccionada()}-${id}`,
+            items: buildItem(payload.producto, deltaKg, deltaPz)
+          });
+        }
       }
 
     } else {
-      // DEVUELTOS: recordarlo: DEVOLUCION = SALE DEL MOSTRADOR => resta stock
       const before = s.backup;
 
       const payload = {
@@ -994,26 +952,29 @@
         devueltos[idx] = { id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at };
       }
 
-      // ✅ Ajuste STOCK REAL (DEVOLUCION): efecto en stock = -kilos
+      /* ✅ Ledger: devolución cambia => AJUSTE por diferencia (recuerda: DEVOLUCION reduce stock) */
       if(payload.producto !== before.producto){
-        // revertir devolución anterior: antes restó, entonces para revertir SUMAMOS
-        await applyStockDeltaByProducto(before.producto, +Number(before.kilos||0));
-        // aplicar devolución nueva: restamos
-        await applyStockDeltaByProducto(payload.producto, -Number(payload.kilos||0));
+        await pushMovimiento({
+          tipo:"AJUSTE",
+          origen:"mostrador",
+          ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
+          items: buildItem(before.producto, +Number(before.kilos||0), 0) /* revertir devolución anterior */
+        });
+        await pushMovimiento({
+          tipo:"AJUSTE",
+          origen:"mostrador",
+          ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}-NEW`,
+          items: buildItem(payload.producto, -Number(payload.kilos||0), 0) /* aplicar nueva devolución */
+        });
       } else {
-        // delta de devolución: si sube devuelto, stock debe bajar más
-        const deltaDev = Number(payload.kilos||0) - Number(before.kilos||0);
-        await applyStockDeltaByProducto(payload.producto, -deltaDev);
-      }
-
-      // (opcional) ledger
-      const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
-      if(Math.abs(deltaKg) > 0.0001 || payload.producto !== before.producto){
-        if(payload.producto !== before.producto){
-          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(before.producto, -Number(before.kilos||0), 0) });
-          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, Number(payload.kilos||0), 0) });
-        } else {
-          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, deltaKg, 0) });
+        const delta = Number(payload.kilos||0) - Number(before.kilos||0);
+        if(Math.abs(delta) > 0.0001){
+          await pushMovimiento({
+            tipo:"AJUSTE",
+            origen:"mostrador",
+            ref:`AJU-DEV-${fechaSeleccionada()}-${id}`,
+            items: buildItem(payload.producto, -delta, 0) /* si aumenta devuelto, baja stock más */
+          });
         }
       }
     }
@@ -1032,36 +993,31 @@
 
       return `
       <tr>
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" value="${escapeHtml(d.producto)}"
                  oninput="setDraft('envi','${item.id}','producto', this.value)">`
             : `${escapeHtml(item.producto)}`
         }</td>
 
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" type="number" step="0.01" value="${Number(d.kilos||0).toFixed(2)}"
                  oninput="setDraft('envi','${item.id}','kilos', this.value)">`
             : `${(+item.kilos).toFixed(2)}`
         }</td>
 
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" type="number" value="${parseInt(d.piezas||0,10)}"
                  oninput="setDraft('envi','${item.id}','piezas', this.value)">`
             : `${item.piezas || 0}`
         }</td>
 
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" value="${escapeHtml(d.origen||'')}"
                  oninput="setDraft('envi','${item.id}','origen', this.value)">`
             : `${escapeHtml(item.origen || '')}`
         }</td>
 
-        <td>${
-          editing
+        <td>${editing
             ? `<select class="cellSelect"
                  onchange="setDraft('envi','${item.id}','congelado', this.value)">
                  <option value="No" ${d.congelado==='No'?'selected':''}>No</option>
@@ -1072,16 +1028,15 @@
 
         <td>
           <div class="miniBtnRow">
-            ${
-              editing
-                ? `
-                  <button class="miniBtn" onclick="saveEdit('envi','${item.id}')">Guardar</button>
-                  <button class="miniBtn gray" onclick="cancelEdit('envi','${item.id}')">Cancelar</button>
-                `
-                : `
-                  <button class="miniBtn" onclick="startEdit('envi','${item.id}')">Editar</button>
-                  <button class="miniBtn red" onclick="eliminarProducto('${item.id}')">Eliminar</button>
-                `
+            ${editing
+              ? `
+                <button class="miniBtn" onclick="saveEdit('envi','${item.id}')">Guardar</button>
+                <button class="miniBtn gray" onclick="cancelEdit('envi','${item.id}')">Cancelar</button>
+              `
+              : `
+                <button class="miniBtn" onclick="startEdit('envi','${item.id}')">Editar</button>
+                <button class="miniBtn red" onclick="eliminarProducto('${item.id}')">Eliminar</button>
+              `
             }
           </div>
         </td>
@@ -1098,15 +1053,13 @@
 
       return `
       <tr>
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" value="${escapeHtml(d.producto)}"
                  oninput="setDraft('dev','${item.id}','producto', this.value)">`
             : `${escapeHtml(item.producto)}`
         }</td>
 
-        <td>${
-          editing
+        <td>${editing
             ? `<input class="cellInput" type="number" step="0.01" value="${Number(d.kilos||0).toFixed(2)}"
                  oninput="setDraft('dev','${item.id}','kilos', this.value)">`
             : `${(+item.kilos).toFixed(2)}`
@@ -1114,16 +1067,15 @@
 
         <td>
           <div class="miniBtnRow">
-            ${
-              editing
-                ? `
-                  <button class="miniBtn" onclick="saveEdit('dev','${item.id}')">Guardar</button>
-                  <button class="miniBtn gray" onclick="cancelEdit('dev','${item.id}')">Cancelar</button>
-                `
-                : `
-                  <button class="miniBtn" onclick="startEdit('dev','${item.id}')">Editar</button>
-                  <button class="miniBtn red" onclick="eliminarDevuelto('${item.id}')">Eliminar</button>
-                `
+            ${editing
+              ? `
+                <button class="miniBtn" onclick="saveEdit('dev','${item.id}')">Guardar</button>
+                <button class="miniBtn gray" onclick="cancelEdit('dev','${item.id}')">Cancelar</button>
+              `
+              : `
+                <button class="miniBtn" onclick="startEdit('dev','${item.id}')">Editar</button>
+                <button class="miniBtn red" onclick="eliminarDevuelto('${item.id}')">Eliminar</button>
+              `
             }
           </div>
         </td>
@@ -1131,7 +1083,6 @@
     }).join('');
   }
 
-  /* ===== Resumen + chart ===== */
   function buildResumen(){
     const map = new Map();
     for(const r of enviados){
@@ -1186,7 +1137,6 @@
     renderChart();
   }
 
-  /* ===== Cargar día ===== */
   async function cargarDia(fecha){
     if(!sb){ alert("No cargó Supabase. Revisa el CDN o internet."); return; }
 
@@ -1217,7 +1167,6 @@
     renderAll();
   }
 
-  /* ===== Realtime ===== */
   async function conectarRealtime(fecha){
     if(!sb) return;
 
@@ -1299,7 +1248,7 @@
     });
   }
 
-  /* ===== Inserts (con stock real + ledger opcional) ===== */
+  /* ===== Inserts (solo ledger) ===== */
   async function agregarProducto(){
     const fecha = fechaSeleccionada();
     const producto = $('#producto').value;
@@ -1334,10 +1283,7 @@
       return;
     }
 
-    // ✅ STOCK REAL: ENVIO = SUMA al mostrador
-    await applyStockDeltaByProducto(producto, +row.kilos);
-
-    // (opcional) ledger
+    /* ✅ Ledger: ENVIO suma al stock (trigger lo hace) */
     await pushMovimiento({
       tipo: "ENVIO",
       origen: origen || "mostrador",
@@ -1378,15 +1324,12 @@
       return;
     }
 
-    // ✅ STOCK REAL: DEVOLUCION = RESTA al mostrador
-    await applyStockDeltaByProducto(producto, -row.kilos);
-
-    // (opcional) ledger
+    /* ✅ Ledger: DEVOLUCION resta al stock (trigger lo hace) */
     await pushMovimiento({
       tipo: "DEVOLUCION",
       origen: "mostrador",
       ref: `DEV-${fecha}-${data.id}`,
-      items: buildItem(producto, row.kilos, 0)
+      items: buildItem(producto, row.kilos, 0).map(it=>({ ...it, kg: -Math.abs(it.kg) })) // fuerza negativo
     });
 
     if(!devueltos.some(x=>x.id===data.id)){
@@ -1407,10 +1350,7 @@
       return;
     }
 
-    // ✅ STOCK REAL: eliminar ENVIO = RESTAR lo que habías sumado
-    await applyStockDeltaByProducto(row.producto, -Number(row.kilos||0));
-
-    // (opcional) ledger
+    /* ✅ Ledger: borrar un ENVIO => AJUSTE negativo */
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: row.origen || "mostrador",
@@ -1431,22 +1371,18 @@
       return;
     }
 
-    // ✅ STOCK REAL: eliminar DEVOLUCION = SUMAR (revertir la resta)
-    await applyStockDeltaByProducto(row.producto, +Number(row.kilos||0));
-
-    // (opcional) ledger
+    /* ✅ Ledger: borrar DEVOLUCION => AJUSTE positivo (revertir la resta) */
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: "mostrador",
       ref: `DELDEV-${fechaSeleccionada()}-${id}`,
-      items: buildItem(row.producto, -Number(row.kilos||0), 0)
+      items: buildItem(row.producto, +Number(row.kilos||0), 0)
     });
 
     const { error } = await sb.from(T_DEVUELTOS).delete().eq('id', id);
     if(error){ console.error(error); alert("No se pudo eliminar devuelto. Revisa internet o RLS."); }
   }
 
-  /* ===== WhatsApp (igual) ===== */
   function enviarWhatsApp(){
     const fecha = fechaSeleccionada();
     const agrupadoEnviados = {};
@@ -1486,7 +1422,6 @@
     window.open(url, "_blank");
   }
 
-  /* ===== Arranque ===== */
   document.getElementById("fecha").value = todayISODate();
   ordenarSelectAlfabeticamente('producto');
   ordenarSelectAlfabeticamente('productoDevuelto');
@@ -1514,7 +1449,6 @@
     await conectarRealtime(f);
     aplicarAutofillPorProducto();
     setPesoStatus("Báscula: esperando…", true);
-    setStockPill("Stock: listo", true);
   }
 
   $('#fecha').addEventListener('change', async ()=>{
@@ -1525,7 +1459,6 @@
 
   iniciar();
 
-  /* ✅ Exponer funciones para onclick inline */
   window.startEdit = startEdit;
   window.cancelEdit = cancelEdit;
   window.saveEdit = saveEdit;
