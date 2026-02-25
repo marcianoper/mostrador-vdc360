@@ -1,10 +1,10 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
   <title>Registro Mostrador — VDC 360°</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-
   <style>
     :root{
       --brand:#0a7a3b;
@@ -340,6 +340,7 @@
       <div class="barRight">
         <a class="btnLink" href="https://marcianoper.github.io/vdc-central/">← VDC Central</a>
         <span id="rt" class="pill ok">REAL TIME</span>
+        <span id="stockPill" class="pill">Stock: listo</span>
       </div>
     </div>
   </div>
@@ -438,13 +439,45 @@
       <div class="cardHead">
         <div>
           <h2>Productos devueltos</h2>
-          <p>Registra devoluciones para control del día. (El resumen abajo hoy solo agrupa enviados, lo dejamos igual que tu lógica actual.)</p>
+          <p>✅ Al agregar devuelto, se descuenta también del <b>stock_mostrador</b> (inventario real).</p>
         </div>
       </div>
 
       <div class="form">
         <label>Producto devuelto
-          <input type="text" id="productoDevuelto" placeholder="Ej: Panza / Tripa / etc." />
+          <!-- 👇 Recomendación: usar select para que el SKU siempre exista -->
+          <select id="productoDevuelto">
+            <option value="">Seleccionar</option>
+            <option value="Caja menudo vísceras">Caja menudo vísceras</option>
+            <option value="Caja Menudo National">Caja Menudo National</option>
+            <option value="Panza">Panza</option>
+            <option value="Libro">Libro</option>
+            <option value="Tripa">Tripa</option>
+            <option value="Tripa de rastro">Tripa de rastro</option>
+            <option value="Corazon">Corazon</option>
+            <option value="Higado">Higado</option>
+            <option value="Sebo">Sebo</option>
+            <option value="Pata Blanca">Pata Blanca</option>
+            <option value="Pata Morena">Pata Morena</option>
+            <option value="Cabeza sin lengua">Cabeza sin lengua</option>
+            <option value="Bofe">Bofe</option>
+            <option value="Tripa Gorda">Tripa gorda</option>
+            <option value="Caja Excel">Caja Excel</option>
+            <option value="Menudo Canadian">Menudo Canadian</option>
+            <option value="Caja Washington">Caja Washington</option>
+            <option value="Cabeza de res">Cabeza de res</option>
+            <option value="Teleco">Teleco</option>
+            <option value="Nana">Nana</option>
+            <option value="Cabeza de Rastro">Cabeza de Rastro</option>
+            <option value="Tripa de Rastro">Tripa de Rastro</option>
+            <option value="Cabeza Congelada">Cabeza Congelada</option>
+            <option value="Quajo">Quajo</option>
+            <option value="Producto Libre">Producto Libre</option>
+            <option value="Lengua">Lengua</option>
+            <option value="Caja de tripa">Caja de tripa</option>
+            <option value="Caja Menudo Swift">Caja Menudo Swift</option>
+            <option value="Menudo sucio">Menudo sucio</option>
+          </select>
         </label>
 
         <label>Kilos devueltos
@@ -555,8 +588,12 @@
   const T_BASCULA = "bascula_live";
   const BASCULA_ID = "torrey_1";
 
-  /* ====== INVENTARIO MOSTRADOR (Ledger) ====== */
+  /* ====== INVENTARIO (ledger opcional) ====== */
   const T_MOV = "movimientos_inventario";
+
+  /* ✅ TABLA REAL DE INVENTARIO MOSTRADOR (la que ve tu dashboard) */
+  const T_STOCK = "stock_mostrador";
+  const RPC_APPLY_DELTA = "apply_stock_delta";
 
   // Mapa producto->SKU (estable)
   const SKU_MAP = {
@@ -590,13 +627,16 @@
     "Lengua":                 "LENGUA",
     "Caja de tripa":          "CAJA_TRIPA",
     "Caja Menudo Swift":      "CAJA_MENUDO_SWIFT",
-    "Menudo sucio":           "MENUDO_SUCI0"
+    "Menudo sucio":           "MENUDO_SUCI0"   // <- si esto fue typo y debe ser MENUDO_SUCIO cámbialo
   };
 
   function toSku(producto){
     const key = String(producto || "").trim();
     return SKU_MAP[key] || key.toUpperCase().replace(/\s+/g, "_");
   }
+
+  function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+
   function buildItem(producto, kilos, piezas){
     return [{
       sku: toSku(producto),
@@ -604,6 +644,7 @@
       pzas: Number(piezas || 0)
     }];
   }
+
   async function pushMovimiento({ tipo, origen, ref, items }){
     if(!sb) return { ok:false, error:"No Supabase client" };
     const payload = { tipo, origen: origen || "mostrador", ref: ref || "", items: items || [] };
@@ -615,6 +656,39 @@
     return { ok:true };
   }
 
+  /* ===========================
+     ✅ STOCK REAL (stock_mostrador)
+     deltaKg:
+       +  = entra al mostrador (envío)
+       -  = sale del mostrador (devolución / venta / ajuste)
+  =========================== */
+  function setStockPill(msg, ok=true){
+    const el = document.getElementById("stockPill");
+    if(!el) return;
+    el.textContent = msg;
+    el.classList.remove("ok","bad");
+    el.classList.add(ok ? "ok" : "bad");
+  }
+
+  async function applyStockDeltaByProducto(producto, deltaKg){
+    if(!sb) return;
+    const sku = toSku(producto);
+    const delta = Number(deltaKg || 0);
+    if(!sku || !Number.isFinite(delta) || Math.abs(delta) < 0.0001) return;
+
+    setStockPill("Stock: aplicando…", true);
+    const { error } = await sb.rpc(RPC_APPLY_DELTA, { p_sku: sku, p_delta: delta });
+
+    if(error){
+      console.error("apply_stock_delta error:", error);
+      setStockPill("Stock: error", false);
+      alert("No se pudo actualizar stock_mostrador. Revisa que exista la RPC apply_stock_delta y RLS.");
+      return;
+    }
+    setStockPill(`Stock: OK (${sku} ${delta>0?'+':''}${delta.toFixed(2)})`, true);
+  }
+
+  /* ===== Helpers DOM ===== */
   let enviados = [];
   let devueltos = [];
   let rtChannel = null;
@@ -622,6 +696,12 @@
 
   const $ = (s)=>document.querySelector(s);
 
+  function escapeHtml(str){
+    return String(str ?? '')
+      .replaceAll('&','&amp;').replaceAll('<','&lt;')
+      .replaceAll('>','&gt;').replaceAll('"','&quot;')
+      .replaceAll("'","&#039;");
+  }
   function todayISODate(){
     const d = new Date();
     const off = d.getTimezoneOffset();
@@ -629,15 +709,8 @@
     return local.toISOString().slice(0,10);
   }
   function fechaSeleccionada(){ return $('#fecha')?.value || todayISODate(); }
-  function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
-  function escapeHtml(str){
-    return String(str ?? '')
-      .replaceAll('&','&amp;').replaceAll('<','&lt;')
-      .replaceAll('>','&gt;').replaceAll('"','&quot;')
-      .replaceAll("'","&#039;");
-  }
 
-  /* ======= Báscula ======= */
+  /* ======= Báscula (igual) ======= */
   function setPesoStatus(msg, ok=true){
     const el = $('#pesoStatus');
     if(!el) return;
@@ -785,12 +858,9 @@
   }
 
   /* ===========================
-     ✅ EDICIÓN INLINE (igual + ajuste inventario)
+     ✅ EDICIÓN INLINE (con ajuste stock real)
   =========================== */
-  const editState = {
-    envi: new Map(),
-    dev:  new Map()
-  };
+  const editState = { envi: new Map(), dev: new Map() };
 
   function startEdit(kind, id){
     const list = (kind === 'envi') ? enviados : devueltos;
@@ -802,16 +872,12 @@
     }
 
     const stMap = (kind==='envi') ? editState.envi : editState.dev;
-    stMap.set(id, {
-      editing:true,
-      backup: JSON.parse(JSON.stringify(row)),
-      draft:  JSON.parse(JSON.stringify(row))
-    });
+    stMap.set(id, { editing:true, backup: JSON.parse(JSON.stringify(row)), draft: JSON.parse(JSON.stringify(row)) });
     renderAll();
   }
 
   function cancelEdit(kind, id){
-    const stMap = (kind==='envi') ? editState.envi : editState.dev;
+    const stMap = (kind === 'envi') ? editState.envi : editState.dev;
     const s = stMap.get(id);
     if(!s) return;
 
@@ -870,43 +936,36 @@
       const idx = enviados.findIndex(x=>x.id===id);
       if(idx>=0){
         enviados[idx] = {
-          id:data.id,
-          producto:data.producto,
-          kilos:+data.kilos,
-          piezas:+(data.piezas||0),
-          origen:data.origen,
-          congelado:data.congelado,
-          created_at:data.created_at
+          id:data.id, producto:data.producto, kilos:+data.kilos, piezas:+(data.piezas||0),
+          origen:data.origen, congelado:data.congelado, created_at:data.created_at
         };
       }
 
-      // ✅ AJUSTE inventario: diferencia (nuevo - anterior)
-      const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
-      const deltaPz = Number(payload.piezas||0) - Number(before.piezas||0);
-
+      // ✅ Ajuste STOCK REAL (ENVIO): delta = nuevo - anterior
       if(payload.producto !== before.producto){
-        await pushMovimiento({
-          tipo:"AJUSTE",
-          origen: payload.origen || "mostrador",
-          ref: `AJU-CHG-${fechaSeleccionada()}-${id}`,
-          items: buildItem(before.producto, -Number(before.kilos||0), -Number(before.piezas||0))
-        });
-        await pushMovimiento({
-          tipo:"AJUSTE",
-          origen: payload.origen || "mostrador",
-          ref: `AJU-CHG-${fechaSeleccionada()}-${id}`,
-          items: buildItem(payload.producto, Number(payload.kilos||0), Number(payload.piezas||0))
-        });
-      } else if(Math.abs(deltaKg) > 0.0001 || Math.abs(deltaPz) > 0.0001){
-        await pushMovimiento({
-          tipo:"AJUSTE",
-          origen: payload.origen || "mostrador",
-          ref: `AJU-${fechaSeleccionada()}-${id}`,
-          items: buildItem(payload.producto, deltaKg, deltaPz)
-        });
+        // revertir producto anterior
+        await applyStockDeltaByProducto(before.producto, -Number(before.kilos||0));
+        // aplicar producto nuevo
+        await applyStockDeltaByProducto(payload.producto, Number(payload.kilos||0));
+      } else {
+        const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
+        await applyStockDeltaByProducto(payload.producto, deltaKg);
+      }
+
+      // (opcional) ledger
+      const deltaKgLedger = Number(payload.kilos||0) - Number(before.kilos||0);
+      const deltaPzLedger = Number(payload.piezas||0) - Number(before.piezas||0);
+      if(payload.producto !== before.producto){
+        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(before.producto, -Number(before.kilos||0), -Number(before.piezas||0)) });
+        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, Number(payload.kilos||0), Number(payload.piezas||0)) });
+      } else if(Math.abs(deltaKgLedger) > 0.0001 || Math.abs(deltaPzLedger) > 0.0001){
+        await pushMovimiento({ tipo:"AJUSTE", origen: payload.origen || "mostrador", ref:`AJU-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, deltaKgLedger, deltaPzLedger) });
       }
 
     } else {
+      // DEVUELTOS: recordarlo: DEVOLUCION = SALE DEL MOSTRADOR => resta stock
+      const before = s.backup;
+
       const payload = {
         producto: String(d.producto || '').trim(),
         kilos: Number(parseFloat(d.kilos).toFixed(2))
@@ -915,8 +974,6 @@
         alert("En devueltos: producto y kilos son obligatorios.");
         return;
       }
-
-      const before = s.backup;
 
       const { data, error } = await sb
         .from(T_DEVUELTOS)
@@ -937,29 +994,26 @@
         devueltos[idx] = { id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at };
       }
 
-      // ✅ Ajuste inventario (DEVOLUCION editada): delta nuevo-anterior
+      // ✅ Ajuste STOCK REAL (DEVOLUCION): efecto en stock = -kilos
+      if(payload.producto !== before.producto){
+        // revertir devolución anterior: antes restó, entonces para revertir SUMAMOS
+        await applyStockDeltaByProducto(before.producto, +Number(before.kilos||0));
+        // aplicar devolución nueva: restamos
+        await applyStockDeltaByProducto(payload.producto, -Number(payload.kilos||0));
+      } else {
+        // delta de devolución: si sube devuelto, stock debe bajar más
+        const deltaDev = Number(payload.kilos||0) - Number(before.kilos||0);
+        await applyStockDeltaByProducto(payload.producto, -deltaDev);
+      }
+
+      // (opcional) ledger
       const deltaKg = Number(payload.kilos||0) - Number(before.kilos||0);
       if(Math.abs(deltaKg) > 0.0001 || payload.producto !== before.producto){
         if(payload.producto !== before.producto){
-          await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
-            items: buildItem(before.producto, -Number(before.kilos||0), 0)
-          });
-          await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
-            items: buildItem(payload.producto, Number(payload.kilos||0), 0)
-          });
+          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(before.producto, -Number(before.kilos||0), 0) });
+          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, Number(payload.kilos||0), 0) });
         } else {
-          await pushMovimiento({
-            tipo:"AJUSTE",
-            origen:"mostrador",
-            ref:`AJU-DEV-${fechaSeleccionada()}-${id}`,
-            items: buildItem(payload.producto, deltaKg, 0)
-          });
+          await pushMovimiento({ tipo:"AJUSTE", origen:"mostrador", ref:`AJU-DEV-${fechaSeleccionada()}-${id}`, items: buildItem(payload.producto, deltaKg, 0) });
         }
       }
     }
@@ -1120,13 +1174,7 @@
 
     chartResumen = new Chart(canvas, {
       type: 'bar',
-      data: {
-        labels,
-        datasets: [
-          { label: 'Kilos', data: kilos },
-          { label: 'Piezas', data: piezas }
-        ]
-      },
+      data: { labels, datasets: [{ label: 'Kilos', data: kilos }, { label: 'Piezas', data: piezas }] },
       options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
     });
   }
@@ -1159,24 +1207,13 @@
     if(e2) console.error(e2);
 
     enviados = (env || []).map(x=>({
-      id:x.id,
-      producto:x.producto,
-      kilos:+x.kilos,
-      piezas:+(x.piezas||0),
-      origen:x.origen,
-      congelado:x.congelado,
-      created_at:x.created_at
+      id:x.id, producto:x.producto, kilos:+x.kilos, piezas:+(x.piezas||0),
+      origen:x.origen, congelado:x.congelado, created_at:x.created_at
     }));
-    devueltos = (dev || []).map(x=>({
-      id:x.id,
-      producto:x.producto,
-      kilos:+x.kilos,
-      created_at:x.created_at
-    }));
+    devueltos = (dev || []).map(x=>({ id:x.id, producto:x.producto, kilos:+x.kilos, created_at:x.created_at }));
 
     editState.envi.clear();
     editState.dev.clear();
-
     renderAll();
   }
 
@@ -1197,10 +1234,7 @@
         (payload)=>{
           const r = payload.new;
           if(enviados.some(x=>x.id===r.id)) return;
-          enviados.unshift({
-            id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0),
-            origen:r.origen, congelado:r.congelado, created_at:r.created_at
-          });
+          enviados.unshift({ id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0), origen:r.origen, congelado:r.congelado, created_at:r.created_at });
           renderAll();
         }
       )
@@ -1220,10 +1254,7 @@
           const r = payload.new;
           const idx = enviados.findIndex(x=>x.id===r.id);
           if(idx>=0 && !editState.envi.get(r.id)?.editing){
-            enviados[idx] = {
-              id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0),
-              origen:r.origen, congelado:r.congelado, created_at:r.created_at
-            };
+            enviados[idx] = { id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0), origen:r.origen, congelado:r.congelado, created_at:r.created_at };
             renderAll();
           }
         }
@@ -1268,7 +1299,7 @@
     });
   }
 
-  /* ===== Inserts (con ledger) ===== */
+  /* ===== Inserts (con stock real + ledger opcional) ===== */
   async function agregarProducto(){
     const fecha = fechaSeleccionada();
     const producto = $('#producto').value;
@@ -1303,7 +1334,10 @@
       return;
     }
 
-    // ✅ Movimiento inventario (ENVIO)
+    // ✅ STOCK REAL: ENVIO = SUMA al mostrador
+    await applyStockDeltaByProducto(producto, +row.kilos);
+
+    // (opcional) ledger
     await pushMovimiento({
       tipo: "ENVIO",
       origen: origen || "mostrador",
@@ -1312,10 +1346,7 @@
     });
 
     if(!enviados.some(x=>x.id===data.id)){
-      enviados.unshift({
-        id:data.id, producto:data.producto, kilos:+data.kilos, piezas:+(data.piezas||0),
-        origen:data.origen, congelado:data.congelado, created_at:data.created_at
-      });
+      enviados.unshift({ id:data.id, producto:data.producto, kilos:+data.kilos, piezas:+(data.piezas||0), origen:data.origen, congelado:data.congelado, created_at:data.created_at });
       renderAll();
     }
 
@@ -1347,7 +1378,10 @@
       return;
     }
 
-    // ✅ Movimiento inventario (DEVOLUCION)
+    // ✅ STOCK REAL: DEVOLUCION = RESTA al mostrador
+    await applyStockDeltaByProducto(producto, -row.kilos);
+
+    // (opcional) ledger
     await pushMovimiento({
       tipo: "DEVOLUCION",
       origen: "mostrador",
@@ -1373,7 +1407,10 @@
       return;
     }
 
-    // ✅ Revertir inventario (AJUSTE negativo)
+    // ✅ STOCK REAL: eliminar ENVIO = RESTAR lo que habías sumado
+    await applyStockDeltaByProducto(row.producto, -Number(row.kilos||0));
+
+    // (opcional) ledger
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: row.origen || "mostrador",
@@ -1394,7 +1431,10 @@
       return;
     }
 
-    // ✅ Revertir el efecto de la devolución (AJUSTE negativo)
+    // ✅ STOCK REAL: eliminar DEVOLUCION = SUMAR (revertir la resta)
+    await applyStockDeltaByProducto(row.producto, +Number(row.kilos||0));
+
+    // (opcional) ledger
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: "mostrador",
@@ -1406,7 +1446,7 @@
     if(error){ console.error(error); alert("No se pudo eliminar devuelto. Revisa internet o RLS."); }
   }
 
-  /* ===== WhatsApp ===== */
+  /* ===== WhatsApp (igual) ===== */
   function enviarWhatsApp(){
     const fecha = fechaSeleccionada();
     const agrupadoEnviados = {};
@@ -1449,6 +1489,7 @@
   /* ===== Arranque ===== */
   document.getElementById("fecha").value = todayISODate();
   ordenarSelectAlfabeticamente('producto');
+  ordenarSelectAlfabeticamente('productoDevuelto');
   markTouched();
 
   $('#producto').addEventListener('change', aplicarAutofillPorProducto);
@@ -1473,6 +1514,7 @@
     await conectarRealtime(f);
     aplicarAutofillPorProducto();
     setPesoStatus("Báscula: esperando…", true);
+    setStockPill("Stock: listo", true);
   }
 
   $('#fecha').addEventListener('change', async ()=>{
