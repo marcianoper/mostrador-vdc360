@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -532,9 +531,7 @@
 
   <section class="card tableCard">
     <div class="tableTop">
-      <p class="sub">Resumen del día (kilos y piezas)
-        <small>Gráfica abajo para ver rápido qué se movió más.</small>
-      </p>
+      <p class="sub">Resumen del día (neto real)</p>
     </div>
 
     <div class="tableWrap">
@@ -562,7 +559,6 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
 
 <script>
-  /* ===== CONFIG SUPABASE ===== */
   const SUPABASE_URL = "https://eqynjddcosvdqjzztznn.supabase.co";
   const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImVxeW5qZGRjb3N2ZHFqenp0em5uIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTYxMzYwMzIsImV4cCI6MjA3MTcxMjAzMn0.Q51wsGelUvxRfqsMYRY5JduCGyZ7s6AzOhqsRf3kOhk";
 
@@ -572,14 +568,10 @@
 
   const T_ENVIADOS = "mostrador_enviados";
   const T_DEVUELTOS = "mostrador_devueltos";
-
   const T_BASCULA = "bascula_live";
   const BASCULA_ID = "torrey_1";
-
-  /* ✅ Ledger: aquí disparan tus triggers hacia stock_mostrador */
   const T_MOV = "movimientos_inventario";
 
-  // Mapa producto->SKU (estable)
   const SKU_MAP = {
     "Caja menudo vísceras":   "CAJA_MENUDO_VISCERAS",
     "Caja Menudo National":   "CAJA_MENUDO_NATIONAL",
@@ -611,14 +603,18 @@
     "Lengua":                 "LENGUA",
     "Caja de tripa":          "CAJA_TRIPA",
     "Caja Menudo Swift":      "CAJA_MENUDO_SWIFT",
-    "Menudo sucio":           "MENUDO_SUCIO"   /* ← corregido */
+    "Menudo sucio":           "MENUDO_SUCIO"
   };
 
   function toSku(producto){
     const key = String(producto || "").trim();
     return SKU_MAP[key] || key.toUpperCase().replace(/\s+/g, "_");
   }
-  function num(v){ const n = Number(v); return Number.isFinite(n) ? n : 0; }
+
+  function num(v){
+    const n = Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
 
   function buildItem(producto, kilos, piezas){
     return [{
@@ -628,10 +624,15 @@
     }];
   }
 
-  /* ✅ Idempotente: upsert con (tipo, ref) único */
   async function pushMovimiento({ tipo, origen, ref, items }){
     if(!sb) return { ok:false, error:"No Supabase client" };
-    const payload = { tipo, origen: origen || "mostrador", ref: ref || "", items: items || [] };
+
+    const payload = {
+      tipo,
+      origen: origen || "mostrador",
+      ref: ref || "",
+      items: items || []
+    };
 
     const { error } = await sb
       .from(T_MOV)
@@ -656,16 +657,20 @@
     const local = new Date(d.getTime() - off*60000);
     return local.toISOString().slice(0,10);
   }
-  function fechaSeleccionada(){ return $('#fecha')?.value || todayISODate(); }
+
+  function fechaSeleccionada(){
+    return $('#fecha')?.value || todayISODate();
+  }
 
   function escapeHtml(str){
     return String(str ?? '')
-      .replaceAll('&','&amp;').replaceAll('<','&lt;')
-      .replaceAll('>','&gt;').replaceAll('"','&quot;')
+      .replaceAll('&','&amp;')
+      .replaceAll('<','&lt;')
+      .replaceAll('>','&gt;')
+      .replaceAll('"','&quot;')
       .replaceAll("'","&#039;");
   }
 
-  /* ======= Báscula ======= */
   function setPesoStatus(msg, ok=true){
     const el = $('#pesoStatus');
     if(!el) return;
@@ -673,6 +678,7 @@
     el.classList.remove('ok','bad');
     el.classList.add(ok ? 'ok' : 'bad');
   }
+
   function setKilosFromBascula(peso){
     const k = $('#kilos');
     if(!k) return;
@@ -682,6 +688,7 @@
     if(Math.abs(cur - next) < 0.001) return;
     k.value = next.toFixed(2);
   }
+
   async function leerBasculaOnce(){
     if(!sb){ alert("No cargó Supabase. Revisa el CDN o internet."); return; }
     setPesoStatus("Báscula: leyendo…", true);
@@ -695,7 +702,7 @@
     if(error){
       console.error(error);
       setPesoStatus("Báscula: error lectura", false);
-      alert("Error leyendo báscula (bascula_live). Revisa RLS / tabla / internet.");
+      alert("Error leyendo báscula (bascula_live).");
       return;
     }
     if(!data){
@@ -703,20 +710,24 @@
       alert("No existe la fila bascula_live.id='torrey_1'.");
       return;
     }
+
     const peso = Number(data.peso);
     if(!Number.isFinite(peso)){
       setPesoStatus("Báscula: peso inválido", false);
       return;
     }
+
     setKilosFromBascula(Math.abs(peso));
     setPesoStatus(`Báscula: OK ${Math.abs(peso).toFixed(2)} kg`, true);
   }
+
   async function conectarBasculaRealtime(){
     if(!sb) return;
     if(chBascula){
       try { await sb.removeChannel(chBascula); } catch(e){}
       chBascula = null;
     }
+
     chBascula = sb
       .channel(`bascula-live-${BASCULA_ID}`)
       .on(
@@ -735,6 +746,7 @@
         else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT') setPesoStatus("Báscula: RT error", false);
       });
   }
+
   async function apagarBasculaRealtime(){
     if(!sb) return;
     if(chBascula){
@@ -744,7 +756,6 @@
     setPesoStatus("Báscula: esperando…", true);
   }
 
-  /* ===== Orden A-Z ===== */
   function ordenarSelectAlfabeticamente(selectId){
     const select = document.getElementById(selectId);
     if(!select) return;
@@ -757,37 +768,42 @@
     options.forEach(opt => select.appendChild(opt));
   }
 
-  /* ===== Autofill ===== */
   const PESO_CAJA_2722 = 27.22;
   function norm(s){
     return String(s||'').trim().toLowerCase()
       .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
   }
+
   const PRODUCTOS_VIAJE = new Set([
     "bofe","cabeza de res","cabeza de rastro","cabeza sin lengua","corazon",
     "higado","libro","nana","panza","pata blanca","pata morena","cuajo",
     "quajo","sebo","teleco","tripa","tripa de rastro","tripa gorda"
   ].map(norm));
+
   const REGLAS_PRODUCTO = new Map([
     [norm("Menudo Canadian"),      { origen: "Promerca",  congelado: "Sí" }],
     [norm("Caja Menudo National"), { origen: "Congelado", congelado: "Sí" }],
     [norm("Caja Washington"),      { origen: "Daniel",    congelado: "Sí" }],
-    [norm("Lengua"),              { origen: "Anglo",      congelado: "Sí" }]
+    [norm("Lengua"),               { origen: "Anglo",     congelado: "Sí" }]
   ]);
+
   const PRODUCTOS_PESO_FIJO_2722 = new Set([ norm("Menudo Canadian"), norm("Caja Menudo National") ]);
 
   const touched = { origen:false, congelado:false, kilos:false };
+
   function markTouched(){
     const o = $('#origen'), c = $('#congelado'), k = $('#kilos');
     if(o) o.addEventListener('input', ()=> touched.origen = true);
     if(c) c.addEventListener('change', ()=> touched.congelado = true);
     if(k) k.addEventListener('input', ()=> touched.kilos = true);
   }
+
   function setIfNotTouched(field, value){
     if(field === 'origen' && !touched.origen) $('#origen').value = value;
     if(field === 'congelado' && !touched.congelado) $('#congelado').value = value;
     if(field === 'kilos' && !touched.kilos) $('#kilos').value = value;
   }
+
   function aplicarAutofillPorProducto(){
     const p = norm($('#producto')?.value || '');
     touched.origen = touched.congelado = touched.kilos = false;
@@ -802,6 +818,7 @@
     }
     recalcularKilosSiAplica();
   }
+
   function recalcularKilosSiAplica(){
     const p = norm($('#producto')?.value || '');
     if(!PRODUCTOS_PESO_FIJO_2722.has(p)) return;
@@ -810,9 +827,6 @@
     setIfNotTouched('kilos', (piezas * PESO_CAJA_2722).toFixed(2));
   }
 
-  /* ===========================
-     ✅ EDICIÓN INLINE (solo ledger)
-  =========================== */
   const editState = { envi: new Map(), dev: new Map() };
 
   function startEdit(kind, id){
@@ -881,7 +895,7 @@
 
       if(error){
         console.error(error);
-        alert("No se pudo guardar cambios (UPDATE). Revisa RLS / permisos.");
+        alert("No se pudo guardar cambios (UPDATE).");
         cancelEdit(kind, id);
         return;
       }
@@ -889,12 +903,16 @@
       const idx = enviados.findIndex(x=>x.id===id);
       if(idx>=0){
         enviados[idx] = {
-          id:data.id, producto:data.producto, kilos:+data.kilos, piezas:+(data.piezas||0),
-          origen:data.origen, congelado:data.congelado, created_at:data.created_at
+          id:data.id,
+          producto:data.producto,
+          kilos:+data.kilos,
+          piezas:+(data.piezas||0),
+          origen:data.origen,
+          congelado:data.congelado,
+          created_at:data.created_at
         };
       }
 
-      /* ✅ Ledger: el ENVIO ya existe; aquí registramos AJUSTE por diferencia */
       if(payload.producto !== before.producto){
         await pushMovimiento({
           tipo:"AJUSTE",
@@ -928,6 +946,7 @@
         producto: String(d.producto || '').trim(),
         kilos: Number(parseFloat(d.kilos).toFixed(2))
       };
+
       if(!payload.producto || !Number.isFinite(payload.kilos)){
         alert("En devueltos: producto y kilos son obligatorios.");
         return;
@@ -942,7 +961,7 @@
 
       if(error){
         console.error(error);
-        alert("No se pudo guardar cambios (UPDATE) en devueltos. Revisa RLS.");
+        alert("No se pudo guardar cambios (UPDATE) en devueltos.");
         cancelEdit(kind, id);
         return;
       }
@@ -952,19 +971,18 @@
         devueltos[idx] = { id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at };
       }
 
-      /* ✅ Ledger: devolución cambia => AJUSTE por diferencia (recuerda: DEVOLUCION reduce stock) */
       if(payload.producto !== before.producto){
         await pushMovimiento({
           tipo:"AJUSTE",
           origen:"mostrador",
           ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}`,
-          items: buildItem(before.producto, +Number(before.kilos||0), 0) /* revertir devolución anterior */
+          items: buildItem(before.producto, +Number(before.kilos||0), 0)
         });
         await pushMovimiento({
           tipo:"AJUSTE",
           origen:"mostrador",
           ref:`AJU-DEV-CHG-${fechaSeleccionada()}-${id}-NEW`,
-          items: buildItem(payload.producto, -Number(payload.kilos||0), 0) /* aplicar nueva devolución */
+          items: buildItem(payload.producto, -Number(payload.kilos||0), 0)
         });
       } else {
         const delta = Number(payload.kilos||0) - Number(before.kilos||0);
@@ -973,7 +991,7 @@
             tipo:"AJUSTE",
             origen:"mostrador",
             ref:`AJU-DEV-${fechaSeleccionada()}-${id}`,
-            items: buildItem(payload.producto, -delta, 0) /* si aumenta devuelto, baja stock más */
+            items: buildItem(payload.producto, -delta, 0)
           });
         }
       }
@@ -983,7 +1001,6 @@
     renderAll();
   }
 
-  /* ===== Render tablas ===== */
   function renderTablaEnviados() {
     const tbody = document.querySelector("#tablaEnviados tbody");
     tbody.innerHTML = enviados.map((item) => {
@@ -1085,15 +1102,27 @@
 
   function buildResumen(){
     const map = new Map();
+
     for(const r of enviados){
-      const k = r.producto;
+      const k = String(r.producto || '').trim();
+      if(!k) continue;
       if(!map.has(k)) map.set(k, { producto:k, kilos:0, piezas:0 });
       const o = map.get(k);
       o.kilos += num(r.kilos);
       o.piezas += parseInt(r.piezas||0,10);
     }
+
+    for(const r of devueltos){
+      const k = String(r.producto || '').trim();
+      if(!k) continue;
+      if(!map.has(k)) map.set(k, { producto:k, kilos:0, piezas:0 });
+      const o = map.get(k);
+      o.kilos -= num(r.kilos);
+    }
+
     return Array.from(map.values()).sort((a,b)=>b.kilos-a.kilos);
   }
+
   function renderResumen(){
     const rows = buildResumen();
     const tbody = document.querySelector("#tablaResumen tbody");
@@ -1125,8 +1154,18 @@
 
     chartResumen = new Chart(canvas, {
       type: 'bar',
-      data: { labels, datasets: [{ label: 'Kilos', data: kilos }, { label: 'Piezas', data: piezas }] },
-      options: { responsive:true, maintainAspectRatio:false, scales:{ y:{ beginAtZero:true } } }
+      data: {
+        labels,
+        datasets: [
+          { label: 'Kilos netos', data: kilos },
+          { label: 'Piezas enviadas', data: piezas }
+        ]
+      },
+      options: {
+        responsive:true,
+        maintainAspectRatio:false,
+        scales:{ y:{ beginAtZero:true } }
+      }
     });
   }
 
@@ -1157,10 +1196,21 @@
     if(e2) console.error(e2);
 
     enviados = (env || []).map(x=>({
-      id:x.id, producto:x.producto, kilos:+x.kilos, piezas:+(x.piezas||0),
-      origen:x.origen, congelado:x.congelado, created_at:x.created_at
+      id:x.id,
+      producto:x.producto,
+      kilos:+x.kilos,
+      piezas:+(x.piezas||0),
+      origen:x.origen,
+      congelado:x.congelado,
+      created_at:x.created_at
     }));
-    devueltos = (dev || []).map(x=>({ id:x.id, producto:x.producto, kilos:+x.kilos, created_at:x.created_at }));
+
+    devueltos = (dev || []).map(x=>({
+      id:x.id,
+      producto:x.producto,
+      kilos:+x.kilos,
+      created_at:x.created_at
+    }));
 
     editState.envi.clear();
     editState.dev.clear();
@@ -1183,7 +1233,15 @@
         (payload)=>{
           const r = payload.new;
           if(enviados.some(x=>x.id===r.id)) return;
-          enviados.unshift({ id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0), origen:r.origen, congelado:r.congelado, created_at:r.created_at });
+          enviados.unshift({
+            id:r.id,
+            producto:r.producto,
+            kilos:+r.kilos,
+            piezas:+(r.piezas||0),
+            origen:r.origen,
+            congelado:r.congelado,
+            created_at:r.created_at
+          });
           renderAll();
         }
       )
@@ -1203,7 +1261,15 @@
           const r = payload.new;
           const idx = enviados.findIndex(x=>x.id===r.id);
           if(idx>=0 && !editState.envi.get(r.id)?.editing){
-            enviados[idx] = { id:r.id, producto:r.producto, kilos:+r.kilos, piezas:+(r.piezas||0), origen:r.origen, congelado:r.congelado, created_at:r.created_at };
+            enviados[idx] = {
+              id:r.id,
+              producto:r.producto,
+              kilos:+r.kilos,
+              piezas:+(r.piezas||0),
+              origen:r.origen,
+              congelado:r.congelado,
+              created_at:r.created_at
+            };
             renderAll();
           }
         }
@@ -1213,7 +1279,12 @@
         (payload)=>{
           const r = payload.new;
           if(devueltos.some(x=>x.id===r.id)) return;
-          devueltos.unshift({ id:r.id, producto:r.producto, kilos:+r.kilos, created_at:r.created_at });
+          devueltos.unshift({
+            id:r.id,
+            producto:r.producto,
+            kilos:+r.kilos,
+            created_at:r.created_at
+          });
           renderAll();
         }
       )
@@ -1233,7 +1304,12 @@
           const r = payload.new;
           const idx = devueltos.findIndex(x=>x.id===r.id);
           if(idx>=0 && !editState.dev.get(r.id)?.editing){
-            devueltos[idx] = { id:r.id, producto:r.producto, kilos:+r.kilos, created_at:r.created_at };
+            devueltos[idx] = {
+              id:r.id,
+              producto:r.producto,
+              kilos:+r.kilos,
+              created_at:r.created_at
+            };
             renderAll();
           }
         }
@@ -1242,13 +1318,20 @@
     await rtChannel.subscribe((s)=>{
       const pill = $('#rt');
       if(!pill) return;
-      if(s === 'SUBSCRIBED'){ pill.textContent = 'REAL TIME'; pill.classList.remove('bad'); pill.classList.add('ok'); }
-      else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){ pill.textContent = 'RT: ' + s; pill.classList.remove('ok'); pill.classList.add('bad'); }
-      else { pill.textContent = 'RT: ' + s; }
+      if(s === 'SUBSCRIBED'){
+        pill.textContent = 'REAL TIME';
+        pill.classList.remove('bad');
+        pill.classList.add('ok');
+      } else if(s === 'CHANNEL_ERROR' || s === 'TIMED_OUT'){
+        pill.textContent = 'RT: ' + s;
+        pill.classList.remove('ok');
+        pill.classList.add('bad');
+      } else {
+        pill.textContent = 'RT: ' + s;
+      }
     });
   }
 
-  /* ===== Inserts (solo ledger) ===== */
   async function agregarProducto(){
     const fecha = fechaSeleccionada();
     const producto = $('#producto').value;
@@ -1279,11 +1362,10 @@
 
     if(error){
       console.error(error);
-      alert("No se pudo guardar. Revisa internet o políticas RLS / Realtime.");
+      alert("No se pudo guardar.");
       return;
     }
 
-    /* ✅ Ledger: ENVIO suma al stock (trigger lo hace) */
     await pushMovimiento({
       tipo: "ENVIO",
       origen: origen || "mostrador",
@@ -1292,7 +1374,15 @@
     });
 
     if(!enviados.some(x=>x.id===data.id)){
-      enviados.unshift({ id:data.id, producto:data.producto, kilos:+data.kilos, piezas:+(data.piezas||0), origen:data.origen, congelado:data.congelado, created_at:data.created_at });
+      enviados.unshift({
+        id:data.id,
+        producto:data.producto,
+        kilos:+data.kilos,
+        piezas:+(data.piezas||0),
+        origen:data.origen,
+        congelado:data.congelado,
+        created_at:data.created_at
+      });
       renderAll();
     }
 
@@ -1310,7 +1400,11 @@
       return;
     }
 
-    const row = { fecha, producto, kilos: Number(parseFloat(kilos).toFixed(2)) };
+    const row = {
+      fecha,
+      producto,
+      kilos: Number(parseFloat(kilos).toFixed(2))
+    };
 
     const { data, error } = await sb
       .from(T_DEVUELTOS)
@@ -1320,20 +1414,27 @@
 
     if(error){
       console.error(error);
-      alert("No se pudo guardar devuelto. Revisa internet o RLS / Realtime.");
+      alert("No se pudo guardar devuelto.");
       return;
     }
 
-    /* ✅ Ledger: DEVOLUCION resta al stock (trigger lo hace) */
+    /* CORREGIDO:
+       NO mandamos kg negativo aquí.
+       El trigger debe interpretar tipo DEVOLUCION y restarlo. */
     await pushMovimiento({
       tipo: "DEVOLUCION",
       origen: "mostrador",
       ref: `DEV-${fecha}-${data.id}`,
-      items: buildItem(producto, row.kilos, 0).map(it=>({ ...it, kg: -Math.abs(it.kg) })) // fuerza negativo
+      items: buildItem(producto, row.kilos, 0)
     });
 
     if(!devueltos.some(x=>x.id===data.id)){
-      devueltos.unshift({ id:data.id, producto:data.producto, kilos:+data.kilos, created_at:data.created_at });
+      devueltos.unshift({
+        id:data.id,
+        producto:data.producto,
+        kilos:+data.kilos,
+        created_at:data.created_at
+      });
       renderAll();
     }
 
@@ -1350,7 +1451,6 @@
       return;
     }
 
-    /* ✅ Ledger: borrar un ENVIO => AJUSTE negativo */
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: row.origen || "mostrador",
@@ -1359,7 +1459,10 @@
     });
 
     const { error } = await sb.from(T_ENVIADOS).delete().eq('id', id);
-    if(error){ console.error(error); alert("No se pudo eliminar. Revisa internet o RLS."); }
+    if(error){
+      console.error(error);
+      alert("No se pudo eliminar.");
+    }
   }
 
   async function eliminarDevuelto(id){
@@ -1371,7 +1474,6 @@
       return;
     }
 
-    /* ✅ Ledger: borrar DEVOLUCION => AJUSTE positivo (revertir la resta) */
     await pushMovimiento({
       tipo: "AJUSTE",
       origen: "mostrador",
@@ -1380,7 +1482,10 @@
     });
 
     const { error } = await sb.from(T_DEVUELTOS).delete().eq('id', id);
-    if(error){ console.error(error); alert("No se pudo eliminar devuelto. Revisa internet o RLS."); }
+    if(error){
+      console.error(error);
+      alert("No se pudo eliminar devuelto.");
+    }
   }
 
   function enviarWhatsApp(){
@@ -1416,6 +1521,9 @@
         mensaje += `• ${producto}: ${kilos.toFixed(2)} kg\n`;
       }
       mensaje += `\n📦 *Total kilos devueltos:* ${totalKilosDevueltos.toFixed(2)} kg\n`;
+      mensaje += `\n✅ *Neto real del día:* ${(totalKilosEnviados - totalKilosDevueltos).toFixed(2)} kg\n`;
+    } else {
+      mensaje += `\n✅ *Neto real del día:* ${totalKilosEnviados.toFixed(2)} kg\n`;
     }
 
     const url = `https://wa.me/?text=${encodeURIComponent(mensaje)}`;
@@ -1428,7 +1536,10 @@
   markTouched();
 
   $('#producto').addEventListener('change', aplicarAutofillPorProducto);
-  $('#piezas').addEventListener('input', ()=>{ touched.kilos = false; recalcularKilosSiAplica(); });
+  $('#piezas').addEventListener('input', ()=>{
+    touched.kilos = false;
+    recalcularKilosSiAplica();
+  });
 
   $('#btnAgregar').addEventListener('click', agregarProducto);
   $('#btnAgregarDev').addEventListener('click', agregarDevuelto);
