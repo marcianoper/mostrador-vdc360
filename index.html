@@ -352,6 +352,7 @@
         <div>
           <h2>Captura de producto enviado</h2>
           <p>✅ Opción A: esta página NO toca stock_mostrador. Solo crea movimientos (ledger) y Supabase actualiza el stock.</p>
+          <p class="hint">⚡ Presiona <kbd>Enter</kbd> en cualquier campo (producto, kilos, piezas, origen, congelado) para agregar el producto rápidamente.</p>
         </div>
       </div>
 
@@ -1015,25 +1016,21 @@
                  oninput="setDraft('envi','${item.id}','producto', this.value)">`
             : `${escapeHtml(item.producto)}`
         }</td>
-
         <td>${editing
             ? `<input class="cellInput" type="number" step="0.01" value="${Number(d.kilos||0).toFixed(2)}"
                  oninput="setDraft('envi','${item.id}','kilos', this.value)">`
             : `${(+item.kilos).toFixed(2)}`
         }</td>
-
         <td>${editing
             ? `<input class="cellInput" type="number" value="${parseInt(d.piezas||0,10)}"
                  oninput="setDraft('envi','${item.id}','piezas', this.value)">`
             : `${item.piezas || 0}`
         }</td>
-
         <td>${editing
             ? `<input class="cellInput" value="${escapeHtml(d.origen||'')}"
                  oninput="setDraft('envi','${item.id}','origen', this.value)">`
             : `${escapeHtml(item.origen || '')}`
         }</td>
-
         <td>${editing
             ? `<select class="cellSelect"
                  onchange="setDraft('envi','${item.id}','congelado', this.value)">
@@ -1042,7 +1039,6 @@
                </select>`
             : `${escapeHtml(item.congelado || 'No')}`
         }</td>
-
         <td>
           <div class="miniBtnRow">
             ${editing
@@ -1075,13 +1071,11 @@
                  oninput="setDraft('dev','${item.id}','producto', this.value)">`
             : `${escapeHtml(item.producto)}`
         }</td>
-
         <td>${editing
             ? `<input class="cellInput" type="number" step="0.01" value="${Number(d.kilos||0).toFixed(2)}"
                  oninput="setDraft('dev','${item.id}','kilos', this.value)">`
             : `${(+item.kilos).toFixed(2)}`
         }</td>
-
         <td>
           <div class="miniBtnRow">
             ${editing
@@ -1386,6 +1380,7 @@
       renderAll();
     }
 
+    // limpiar campos de peso y piezas para siguiente captura rápida, pero conservar producto/origen/congelado (opcional)
     $('#kilos').value = '';
     $('#piezas').value = '';
   }
@@ -1418,9 +1413,6 @@
       return;
     }
 
-    /* CORREGIDO:
-       NO mandamos kg negativo aquí.
-       El trigger debe interpretar tipo DEVOLUCION y restarlo. */
     await pushMovimiento({
       tipo: "DEVOLUCION",
       origen: "mostrador",
@@ -1530,6 +1522,23 @@
     window.open(url, "_blank");
   }
 
+  // FUNCIÓN NUEVA: presionar Enter en cualquier campo del formulario de envíos dispara el botón de agregar
+  function enableEnterToAdd() {
+    const fields = ['#producto', '#kilos', '#piezas', '#origen', '#congelado'];
+    fields.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('btnAgregar');
+            if (btn) btn.click();
+          }
+        });
+      }
+    });
+  }
+
   document.getElementById("fecha").value = todayISODate();
   ordenarSelectAlfabeticamente('producto');
   ordenarSelectAlfabeticamente('productoDevuelto');
@@ -1560,6 +1569,7 @@
     await conectarRealtime(f);
     aplicarAutofillPorProducto();
     setPesoStatus("Báscula: esperando…", true);
+    enableEnterToAdd();   // Activar atajo de teclado Enter
   }
 
   $('#fecha').addEventListener('change', async ()=>{
