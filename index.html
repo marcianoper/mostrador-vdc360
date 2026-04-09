@@ -352,7 +352,7 @@
         <div>
           <h2>Captura de producto enviado</h2>
           <p>✅ Opción A: esta página NO toca stock_mostrador. Solo crea movimientos (ledger) y Supabase actualiza el stock.</p>
-          <p class="hint">⚡ Presiona <kbd>Enter</kbd> en cualquier campo (producto, kilos, piezas, origen, congelado) para agregar el producto rápidamente.</p>
+          <p class="hint">⚡ Presiona <kbd>Enter</kbd> en cualquier campo para agregar rápido.</p>
         </div>
       </div>
 
@@ -363,40 +363,13 @@
         </label>
 
         <label>Producto
-          <select id="producto">
-            <option value="">Seleccionar</option>
-            <option value="Caja menudo vísceras">Caja menudo vísceras</option>
-            <option value="Caja Menudo National">Caja Menudo National</option>
-              <option value="Caja Menudo National X KG">Caja Menudo National X KG</option>
-            <option value="Panza">Panza</option>
-            <option value="Libro">Libro</option>
-            <option value="Tripa">Tripa</option>
-            <option value="Tripa de rastro">Tripa de rastro</option>
-            <option value="Corazon">Corazon</option>
-            <option value="Higado">Higado</option>
-            <option value="Sebo">Sebo</option>
-            <option value="Pata Blanca">Pata Blanca</option>
-            <option value="Pata Morena">Pata Morena</option>
-            <option value="Cabeza sin lengua">Cabeza sin lengua</option>
-            <option value="Bofe">Bofe</option>
-            <option value="Tripa Gorda">Tripa gorda</option>
-            <option value="Caja Excel">Caja Excel</option>
-            <option value="Menudo Canadian">Menudo Canadian</option>
-              <option value="Caja Menudo Canadian X K">Caja Menudo Canadian X KG</option>
-            <option value="Caja Washington">Caja Washington</option>
-            <option value="Cabeza de res">Cabeza de res</option>
-            <option value="Teleco">Teleco</option>
-            <option value="Nana">Nana</option>
-            <option value="Cabeza de Rastro">Cabeza de Rastro</option>
-            <option value="Tripa de Rastro">Tripa de Rastro</option>
-            <option value="Cabeza Congelada">Cabeza Congelada</option>
-            <option value="Quajo">Quajo</option>
-            <option value="Producto Libre">Producto Libre</option>
-            <option value="Lengua">Lengua</option>
-            <option value="Caja de tripa">Caja de tripa</option>
-            <option value="Caja Menudo Swift">Caja Menudo Swift</option>
-            <option value="Menudo sucio">Menudo sucio</option>
-          </select>
+          <input
+            type="text"
+            id="producto"
+            list="listaProductos"
+            placeholder="Escribe para buscar producto..."
+            autocomplete="off"
+          />
         </label>
 
         <div class="row2">
@@ -436,46 +409,19 @@
       <div class="cardHead">
         <div>
           <h2>Productos devueltos</h2>
-          <p>✅ Opción A: al agregar/eliminar/editar devueltos, solo se registran movimientos; Supabase actualiza stock.</p>
+          <p>✅ Al agregar/eliminar/editar devueltos, solo se registran movimientos; Supabase actualiza stock.</p>
         </div>
       </div>
 
       <div class="form">
         <label>Producto devuelto
-          <select id="productoDevuelto">
-            <option value="">Seleccionar</option>
-            <option value="Caja menudo vísceras">Caja menudo vísceras</option>
-            <option value="Caja Menudo National">Caja Menudo National</option>
-             <option value="Caja Menudo National X KG">Caja Menudo National X KG</option>
-            <option value="Panza">Panza</option>
-            <option value="Libro">Libro</option>
-            <option value="Tripa">Tripa</option>
-            <option value="Tripa de rastro">Tripa de rastro</option>
-            <option value="Corazon">Corazon</option>
-            <option value="Higado">Higado</option>
-            <option value="Sebo">Sebo</option>
-            <option value="Pata Blanca">Pata Blanca</option>
-            <option value="Pata Morena">Pata Morena</option>
-            <option value="Cabeza sin lengua">Cabeza sin lengua</option>
-            <option value="Bofe">Bofe</option>
-            <option value="Tripa Gorda">Tripa gorda</option>
-            <option value="Caja Excel">Caja Excel</option>
-            <option value="Menudo Canadian">Menudo Canadian</option>
-             <option value="Caja Menudo Canadian X KG">Caja Menudo Canadian X KG</option>
-            <option value="Caja Washington">Caja Washington</option>
-            <option value="Cabeza de res">Cabeza de res</option>
-            <option value="Teleco">Teleco</option>
-            <option value="Nana">Nana</option>
-            <option value="Cabeza de Rastro">Cabeza de Rastro</option>
-            <option value="Tripa de Rastro">Tripa de Rastro</option>
-            <option value="Cabeza Congelada">Cabeza Congelada</option>
-            <option value="Quajo">Quajo</option>
-            <option value="Producto Libre">Producto Libre</option>
-            <option value="Lengua">Lengua</option>
-            <option value="Caja de tripa">Caja de tripa</option>
-            <option value="Caja Menudo Swift">Caja Menudo Swift</option>
-            <option value="Menudo sucio">Menudo sucio</option>
-          </select>
+          <input
+            type="text"
+            id="productoDevuelto"
+            list="listaProductosDevueltos"
+            placeholder="Escribe para buscar producto..."
+            autocomplete="off"
+          />
         </label>
 
         <label>Kilos devueltos
@@ -491,10 +437,13 @@
 
   </div>
 
+  <datalist id="listaProductos"></datalist>
+  <datalist id="listaProductosDevueltos"></datalist>
+
   <section class="card tableCard">
     <div class="tableTop">
       <p class="sub">Productos enviados (lo más nuevo arriba)
-        <small>Editar solo si de verdad lo necesitas — si no, elimina y vuelve a capturar (más rápido).</small>
+        <small>Editar solo si de verdad lo necesitas — si no, elimina y vuelve a capturar.</small>
       </p>
     </div>
 
@@ -577,45 +526,118 @@
   const BASCULA_ID = "torrey_1";
   const T_MOV = "movimientos_inventario";
 
+  const PRODUCTOS = [
+    "Bofe",
+    "Cabeza Congelada",
+    "Cabeza de Rastro",
+    "Cabeza de res",
+    "Cabeza sin lengua",
+    "Caja de tripa",
+    "Caja Excel",
+    "Caja menudo vísceras",
+    "Caja Menudo Canadian X KG",
+    "Caja Menudo National",
+    "Caja Menudo National X KG",
+    "Caja Menudo Swift",
+    "Caja Washington",
+    "Corazon",
+    "Higado",
+    "Lengua",
+    "Libro",
+    "Menudo Canadian",
+    "Menudo sucio",
+    "Nana",
+    "Panza",
+    "Pata Blanca",
+    "Pata Morena",
+    "Producto Libre",
+    "Quajo",
+    "Sebo",
+    "Teleco",
+    "Tripa",
+    "Tripa de Rastro",
+    "Tripa de rastro",
+    "Tripa Gorda"
+  ];
+
+  const PRODUCTOS_CANONICOS = {};
+  PRODUCTOS.forEach(p => PRODUCTOS_CANONICOS[norm(p)] = p);
+
   const SKU_MAP = {
-    "Caja menudo vísceras":   "CAJA_MENUDO_VISCERAS",
-    "Caja Menudo National":   "CAJA_MENUDO_NATIONAL",
-    "Caja Menudo National X KG":   "CAJA_MENUDO_NATIONAL",
-    "Panza":                  "PANZA",
-    "Libro":                  "LIBRO",
-    "Tripa":                  "TRIPA",
-    "Tripa de rastro":        "TRIPA_RASTRO",
-    "Tripa de Rastro":        "TRIPA_RASTRO",
-    "Corazon":                "CORAZON",
-    "Higado":                 "HIGADO",
-    "Sebo":                   "SEBO",
-    "Pata Blanca":            "PATA_BLANCA",
-    "Pata Morena":            "PATA_MORENA",
-    "Cabeza sin lengua":      "CABEZA_SIN_LENGUA",
-    "Cabeza de res":          "CABEZA_RES",
-    "Bofe":                   "BOFE",
-    "Tripa Gorda":            "TRIPA_GORDA",
-    "Caja Excel":             "CAJA_EXCEL",
-    "Menudo Canadian":        "MENUDO_CANADIAN",
-    "Caja Menudo Canadian X KG":        "MENUDO_CANADIAN",
-    "Caja Washington":        "CAJA_WASHINGTON",
-    "Teleco":                 "TELECO",
-    "Nana":                   "NANA",
-    "Cabeza de Rastro":       "CABEZA_RASTRO",
-    "Cabeza de rastro":       "CABEZA_RASTRO",
-    "Cabeza Congelada":       "CABEZA_CONGELADA",
-    "Quajo":                  "CUAJO",
-    "Cuajo":                  "CUAJO",
-    "Producto Libre":         "PRODUCTO_LIBRE",
-    "Lengua":                 "LENGUA",
-    "Caja de tripa":          "CAJA_TRIPA",
-    "Caja Menudo Swift":      "CAJA_MENUDO_SWIFT",
-    "Menudo sucio":           "MENUDO_SUCIO"
+    "Caja menudo vísceras": "CAJA_MENUDO_VISCERAS",
+    "Caja Menudo National": "CAJA_MENUDO_NATIONAL",
+    "Caja Menudo National X KG": "CAJA_MENUDO_NATIONAL",
+    "Panza": "PANZA",
+    "Libro": "LIBRO",
+    "Tripa": "TRIPA",
+    "Tripa de rastro": "TRIPA_RASTRO",
+    "Tripa de Rastro": "TRIPA_RASTRO",
+    "Corazon": "CORAZON",
+    "Higado": "HIGADO",
+    "Sebo": "SEBO",
+    "Pata Blanca": "PATA_BLANCA",
+    "Pata Morena": "PATA_MORENA",
+    "Cabeza sin lengua": "CABEZA_SIN_LENGUA",
+    "Cabeza de res": "CABEZA_RES",
+    "Bofe": "BOFE",
+    "Tripa Gorda": "TRIPA_GORDA",
+    "Caja Excel": "CAJA_EXCEL",
+    "Menudo Canadian": "MENUDO_CANADIAN",
+    "Caja Menudo Canadian X KG": "MENUDO_CANADIAN",
+    "Caja Washington": "CAJA_WASHINGTON",
+    "Teleco": "TELECO",
+    "Nana": "NANA",
+    "Cabeza de Rastro": "CABEZA_RASTRO",
+    "Cabeza de rastro": "CABEZA_RASTRO",
+    "Cabeza Congelada": "CABEZA_CONGELADA",
+    "Quajo": "CUAJO",
+    "Cuajo": "CUAJO",
+    "Producto Libre": "PRODUCTO_LIBRE",
+    "Lengua": "LENGUA",
+    "Caja de tripa": "CAJA_TRIPA",
+    "Caja Menudo Swift": "CAJA_MENUDO_SWIFT",
+    "Menudo sucio": "MENUDO_SUCIO"
   };
 
+  let enviados = [];
+  let devueltos = [];
+  let rtChannel = null;
+  let chBascula = null;
+  let chartResumen = null;
+  const editState = { envi: new Map(), dev: new Map() };
+  const $ = (s)=>document.querySelector(s);
+
+  const PESO_CAJA_2722 = 27.22;
+
+  function norm(s){
+    return String(s || "")
+      .trim()
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ");
+  }
+
+  function canonProducto(nombre){
+    const limpio = String(nombre || "").trim();
+    if(!limpio) return "";
+    return PRODUCTOS_CANONICOS[norm(limpio)] || limpio;
+  }
+
+  function esProductoValido(nombre){
+    return !!PRODUCTOS_CANONICOS[norm(nombre)];
+  }
+
+  function llenarDatalist(id){
+    const dl = document.getElementById(id);
+    if(!dl) return;
+    const lista = [...new Set(PRODUCTOS)].sort((a,b)=>a.localeCompare(b, "es", { sensitivity:"base" }));
+    dl.innerHTML = lista.map(p => `<option value="${escapeHtml(p)}"></option>`).join("");
+  }
+
   function toSku(producto){
-    const key = String(producto || "").trim();
-    return SKU_MAP[key] || key.toUpperCase().replace(/\s+/g, "_");
+    const canon = canonProducto(producto);
+    return SKU_MAP[canon] || canon.toUpperCase().replace(/\s+/g, "_");
   }
 
   function num(v){
@@ -651,12 +673,6 @@
     }
     return { ok:true };
   }
-
-  let enviados = [];
-  let devueltos = [];
-  let rtChannel = null;
-  let chBascula = null;
-  const $ = (s)=>document.querySelector(s);
 
   function todayISODate(){
     const d = new Date();
@@ -763,24 +779,6 @@
     setPesoStatus("Báscula: esperando…", true);
   }
 
-  function ordenarSelectAlfabeticamente(selectId){
-    const select = document.getElementById(selectId);
-    if(!select) return;
-    const options = Array.from(select.options);
-    if(options.length <= 2) return;
-    const first = options.shift();
-    options.sort((a, b) => a.text.localeCompare(b.text, 'es', { sensitivity: 'base' }));
-    select.innerHTML = '';
-    select.appendChild(first);
-    options.forEach(opt => select.appendChild(opt));
-  }
-
-  const PESO_CAJA_2722 = 27.22;
-  function norm(s){
-    return String(s||'').trim().toLowerCase()
-      .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-  }
-
   const PRODUCTOS_VIAJE = new Set([
     "bofe","cabeza de res","cabeza de rastro","cabeza sin lengua","corazon",
     "higado","libro","nana","panza","pata blanca","pata morena","cuajo",
@@ -788,13 +786,20 @@
   ].map(norm));
 
   const REGLAS_PRODUCTO = new Map([
-    [norm("Menudo Canadian"),      { origen: "Promerca",  congelado: "Sí" }],
+    [norm("Menudo Canadian"), { origen: "Promerca",  congelado: "Sí" }],
+    [norm("Caja Menudo Canadian X KG"), { origen: "Promerca", congelado: "Sí" }],
     [norm("Caja Menudo National"), { origen: "Congelado", congelado: "Sí" }],
-    [norm("Caja Washington"),      { origen: "Daniel",    congelado: "Sí" }],
-    [norm("Lengua"),               { origen: "Anglo",     congelado: "Sí" }]
+    [norm("Caja Menudo National X KG"), { origen: "Congelado", congelado: "Sí" }],
+    [norm("Caja Washington"), { origen: "Daniel", congelado: "Sí" }],
+    [norm("Lengua"), { origen: "Anglo", congelado: "Sí" }]
   ]);
 
-  const PRODUCTOS_PESO_FIJO_2722 = new Set([ norm("Menudo Canadian"), norm("Caja Menudo National") ]);
+  const PRODUCTOS_PESO_FIJO_2722 = new Set([
+    norm("Menudo Canadian"),
+    norm("Caja Menudo Canadian X KG"),
+    norm("Caja Menudo National"),
+    norm("Caja Menudo National X KG")
+  ]);
 
   const touched = { origen:false, congelado:false, kilos:false };
 
@@ -823,6 +828,7 @@
       setIfNotTouched('origen', 'Viaje');
       setIfNotTouched('congelado', 'No');
     }
+
     recalcularKilosSiAplica();
   }
 
@@ -833,8 +839,6 @@
     if(!piezas) return;
     setIfNotTouched('kilos', (piezas * PESO_CAJA_2722).toFixed(2));
   }
-
-  const editState = { envi: new Map(), dev: new Map() };
 
   function startEdit(kind, id){
     const list = (kind === 'envi') ? enviados : devueltos;
@@ -881,7 +885,7 @@
       const before = s.backup;
 
       const payload = {
-        producto: String(d.producto || '').trim(),
+        producto: canonProducto(String(d.producto || '').trim()),
         kilos: Number(parseFloat(d.kilos).toFixed(2)),
         piezas: parseInt(d.piezas || 0, 10) || 0,
         origen: String(d.origen || '').trim(),
@@ -950,7 +954,7 @@
       const before = s.backup;
 
       const payload = {
-        producto: String(d.producto || '').trim(),
+        producto: canonProducto(String(d.producto || '').trim()),
         kilos: Number(parseFloat(d.kilos).toFixed(2))
       };
 
@@ -1135,7 +1139,6 @@
     `).join('');
   }
 
-  let chartResumen = null;
   function renderChart(){
     const rows = buildResumen();
     const labels = rows.map(r=>r.producto);
@@ -1334,7 +1337,8 @@
 
   async function agregarProducto(){
     const fecha = fechaSeleccionada();
-    const producto = $('#producto').value;
+    const productoInput = $('#producto').value;
+    const producto = canonProducto(productoInput);
     const kilos = $('#kilos').value;
     const piezas = $('#piezas').value || 0;
     const origen = $('#origen').value;
@@ -1342,6 +1346,11 @@
 
     if(!producto || !kilos || !origen){
       alert("Por favor completa los campos obligatorios.");
+      return;
+    }
+
+    if(!esProductoValido(producto)){
+      alert("Selecciona un producto válido de la lista.");
       return;
     }
 
@@ -1386,18 +1395,27 @@
       renderAll();
     }
 
-    // limpiar campos de peso y piezas para siguiente captura rápida, pero conservar producto/origen/congelado (opcional)
+    $('#producto').value = '';
     $('#kilos').value = '';
     $('#piezas').value = '';
+    $('#origen').value = '';
+    $('#congelado').value = 'No';
+    touched.origen = touched.congelado = touched.kilos = false;
   }
 
   async function agregarDevuelto(){
     const fecha = fechaSeleccionada();
-    const producto = $('#productoDevuelto').value;
+    const productoInput = $('#productoDevuelto').value;
+    const producto = canonProducto(productoInput);
     const kilos = $('#kilosDevuelto').value;
 
     if(!producto || !kilos){
       alert("Completa ambos campos del producto devuelto.");
+      return;
+    }
+
+    if(!esProductoValido(producto)){
+      alert("Selecciona un producto válido de la lista en devueltos.");
       return;
     }
 
@@ -1528,10 +1546,9 @@
     window.open(url, "_blank");
   }
 
-  // FUNCIÓN NUEVA: presionar Enter en cualquier campo del formulario de envíos dispara el botón de agregar
   function enableEnterToAdd() {
-    const fields = ['#producto', '#kilos', '#piezas', '#origen', '#congelado'];
-    fields.forEach(sel => {
+    const fieldsEnvios = ['#producto', '#kilos', '#piezas', '#origen', '#congelado'];
+    fieldsEnvios.forEach(sel => {
       const el = document.querySelector(sel);
       if (el) {
         el.addEventListener('keydown', (e) => {
@@ -1543,13 +1560,28 @@
         });
       }
     });
+
+    const fieldsDev = ['#productoDevuelto', '#kilosDevuelto'];
+    fieldsDev.forEach(sel => {
+      const el = document.querySelector(sel);
+      if (el) {
+        el.addEventListener('keydown', (e) => {
+          if (e.key === 'Enter') {
+            e.preventDefault();
+            const btn = document.getElementById('btnAgregarDev');
+            if (btn) btn.click();
+          }
+        });
+      }
+    });
   }
 
   document.getElementById("fecha").value = todayISODate();
-  ordenarSelectAlfabeticamente('producto');
-  ordenarSelectAlfabeticamente('productoDevuelto');
+  llenarDatalist('listaProductos');
+  llenarDatalist('listaProductosDevueltos');
   markTouched();
 
+  $('#producto').addEventListener('input', aplicarAutofillPorProducto);
   $('#producto').addEventListener('change', aplicarAutofillPorProducto);
   $('#piezas').addEventListener('input', ()=>{
     touched.kilos = false;
@@ -1575,7 +1607,7 @@
     await conectarRealtime(f);
     aplicarAutofillPorProducto();
     setPesoStatus("Báscula: esperando…", true);
-    enableEnterToAdd();   // Activar atajo de teclado Enter
+    enableEnterToAdd();
   }
 
   $('#fecha').addEventListener('change', async ()=>{
