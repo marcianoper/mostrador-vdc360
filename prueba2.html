@@ -467,6 +467,95 @@
   color:#64748b;
   font-weight:800;
 }
+    /* ===== CONTRASTE COMBOBOX VDC ===== */
+
+.comboBoxVDC{
+  position:relative;
+}
+
+/* INPUT */
+.comboBoxVDC .fd-input{
+  background:#ffffff !important;
+  border:2px solid #cbd5e1 !important;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+  transition:all .15s ease;
+}
+
+/* HOVER */
+.comboBoxVDC .fd-input:hover{
+  border-color:#94a3b8 !important;
+}
+
+/* FOCUS */
+.comboBoxVDC .fd-input:focus{
+  border-color:var(--brand) !important;
+  box-shadow:0 0 0 4px rgba(10,122,59,.15), 0 6px 14px rgba(0,0,0,.08);
+}
+
+/* ICONO */
+.comboIcon{
+  position:absolute;
+  right:12px;
+  top:40px;
+  font-size:14px;
+  color:#475569;
+  font-weight:900;
+}
+
+/* PANEL DROPDOWN */
+.comboPanel{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  background:#ffffff;
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  box-shadow:0 20px 45px rgba(0,0,0,.18);
+  z-index:100;
+  max-height:260px;
+  overflow:auto;
+  display:none;
+}
+
+/* CUANDO ABRE */
+.comboPanel.open{
+  display:block;
+  animation:fadeIn .12s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(-4px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* ITEMS */
+.comboItem{
+  padding:12px 14px;
+  font-weight:900;
+  cursor:pointer;
+  border-bottom:1px solid #eef2f7;
+  color:#0f172a;
+}
+
+/* HOVER */
+.comboItem:hover{
+  background:#eaf7ef;
+  color:#0a7a3b;
+}
+
+/* ACTIVO (teclado) */
+.comboItem.active{
+  background:#0a7a3b;
+  color:#fff;
+}
+
+/* SIN RESULTADOS */
+.comboEmpty{
+  padding:12px 14px;
+  color:#64748b;
+  font-weight:800;
+}
   </style>
 </head>
 
