@@ -607,6 +607,71 @@
   padding:14px 16px;
   font-size:14px;
 }
+
+    /* ===== DATE PICKER VDC / SAP STYLE ===== */
+
+.fechaBoxVDC{
+  display:block;
+}
+
+.fechaInputWrap{
+  position:relative;
+}
+
+.fechaInputWrap input{
+  height:48px !important;
+  padding:12px 46px 12px 14px !important;
+  border-radius:14px !important;
+  border:2px solid #cbd5e1 !important;
+  background:#fff !important;
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
+  font-weight:900;
+}
+
+.fechaInputWrap input:hover{
+  border-color:#94a3b8 !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.10);
+}
+
+.fechaInputWrap input:focus{
+  border-color:var(--brand) !important;
+  box-shadow:
+    0 0 0 4px rgba(10,122,59,.15),
+    0 10px 24px rgba(0,0,0,.12);
+}
+
+.fechaIcon{
+  position:absolute;
+  right:14px;
+  top:50%;
+  transform:translateY(-50%);
+  font-size:16px;
+  pointer-events:none;
+}
+
+.fechaQuick{
+  display:flex;
+  gap:8px;
+  flex-wrap:wrap;
+  margin-top:10px;
+}
+
+.fechaQuick button{
+  border:1px solid rgba(15,23,42,.18);
+  background:#fff;
+  color:#111827;
+  border-radius:999px;
+  padding:8px 11px;
+  font-weight:900;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(2,6,23,.06);
+}
+
+.fechaQuick button:hover{
+  background:#eaf7ef;
+  border-color:rgba(10,122,59,.25);
+  color:var(--brand);
+}
   </style>
 </head>
 
@@ -646,12 +711,20 @@
       </div>
 
       <div class="form">
-        <label>Fecha
-          <input type="date" id="fecha" value="">
-          <div class="hint">Tip: si cambias la fecha, el sistema carga todo ese día y re-conecta el realtime.</div>
-        </label>
+      <label class="fechaBoxVDC">Fecha
+  <div class="fechaInputWrap">
+    <input type="date" id="fecha" value="">
+    <span class="fechaIcon">📅</span>
+  </div>
 
-        <label class="comboBoxVDC">Producto
+  <div class="fechaQuick">
+    <button type="button" onclick="cambiarDia(-1)">← Día anterior</button>
+    <button type="button" onclick="irHoy()">Hoy</button>
+    <button type="button" onclick="cambiarDia(1)">Día siguiente →</button>
+  </div>
+
+  <div class="hint">Tip: si cambias la fecha, el sistema carga todo ese día y re-conecta el realtime.</div>
+</label>
   <input
     class="fd-input"
     type="text"
@@ -919,6 +992,30 @@
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, " ");
   }
+
+  function cambiarDia(delta){
+  const input = document.getElementById("fecha");
+  if(!input || !input.value) return;
+
+  const partes = input.value.split("-");
+  const d = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
+  d.setDate(d.getDate() + delta);
+
+  const yyyy = d.getFullYear();
+  const mm = String(d.getMonth() + 1).padStart(2, "0");
+  const dd = String(d.getDate()).padStart(2, "0");
+
+  input.value = `${yyyy}-${mm}-${dd}`;
+  input.dispatchEvent(new Event("change"));
+}
+
+function irHoy(){
+  const input = document.getElementById("fecha");
+  if(!input) return;
+
+  input.value = todayISODate();
+  input.dispatchEvent(new Event("change"));
+}
 
   function canonProducto(nombre){
     const limpio = String(nombre || "").trim();
