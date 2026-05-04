@@ -922,29 +922,7 @@
       .replace(/\s+/g, " ");
   }
 
-  function cambiarDia(delta){
-  const input = document.getElementById("fecha");
-  if(!input || !input.value) return;
-
-  const partes = input.value.split("-");
-  const d = new Date(Number(partes[0]), Number(partes[1]) - 1, Number(partes[2]));
-  d.setDate(d.getDate() + delta);
-
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, "0");
-  const dd = String(d.getDate()).padStart(2, "0");
-
-  input.value = `${yyyy}-${mm}-${dd}`;
-  input.dispatchEvent(new Event("change"));
-}
-
-function irHoy(){
-  const input = document.getElementById("fecha");
-  if(!input) return;
-
-  input.value = todayISODate();
-  input.dispatchEvent(new Event("change"));
-}
+  
 
   function canonProducto(nombre){
     const limpio = String(nombre || "").trim();
