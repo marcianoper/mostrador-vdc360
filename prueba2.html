@@ -411,6 +411,62 @@
 .barRight .fd-button{
   text-decoration:none;
 }
+    /* ===== SAP Pattern: Combobox VDC ===== */
+
+.comboBoxVDC{
+  position:relative;
+}
+
+.comboBoxVDC .fd-input{
+  padding-right:42px !important;
+}
+
+.comboIcon{
+  position:absolute;
+  right:12px;
+  top:39px;
+  font-size:14px;
+  color:#64748b;
+  pointer-events:none;
+}
+
+.comboPanel{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  background:#fff;
+  border:1px solid rgba(15,23,42,.12);
+  border-radius:14px;
+  box-shadow:0 18px 40px rgba(15,23,42,.16);
+  z-index:100;
+  max-height:260px;
+  overflow:auto;
+  display:none;
+}
+
+.comboPanel.open{
+  display:block;
+}
+
+.comboItem{
+  padding:11px 14px;
+  font-weight:850;
+  cursor:pointer;
+  border-bottom:1px solid #eef2f7;
+}
+
+.comboItem:hover,
+.comboItem.active{
+  background:#eaf7ef;
+  color:#0a7a3b;
+}
+
+.comboEmpty{
+  padding:12px 14px;
+  color:#64748b;
+  font-weight:800;
+}
   </style>
 </head>
 
@@ -455,15 +511,17 @@
           <div class="hint">Tip: si cambias la fecha, el sistema carga todo ese día y re-conecta el realtime.</div>
         </label>
 
-        <label>Producto
-          <input
-            type="text"
-            id="producto"
-            list="listaProductos"
-            placeholder="Escribe para buscar producto..."
-            autocomplete="off"
-          />
-        </label>
+        <label class="comboBoxVDC">Producto
+  <input
+    class="fd-input"
+    type="text"
+    id="producto"
+    placeholder="Escribe para buscar producto..."
+    autocomplete="off"
+  />
+  <span class="comboIcon">⌄</span>
+  <div id="comboProducto" class="comboPanel"></div>
+</label>
 
         <div class="row2">
           <label>Kilos
@@ -511,15 +569,17 @@
       </div>
 
       <div class="form">
-        <label>Producto devuelto
-          <input
-            type="text"
-            id="productoDevuelto"
-            list="listaProductosDevueltos"
-            placeholder="Escribe para buscar producto..."
-            autocomplete="off"
-          />
-        </label>
+       <label class="comboBoxVDC">Producto devuelto
+  <input
+    class="fd-input"
+    type="text"
+    id="productoDevuelto"
+    placeholder="Escribe para buscar producto..."
+    autocomplete="off"
+  />
+  <span class="comboIcon">⌄</span>
+  <div id="comboProductoDevuelto" class="comboPanel"></div>
+</label>
 
         <label>Kilos devueltos
           <input type="number" id="kilosDevuelto" step="0.01" />
@@ -1678,9 +1738,100 @@
     });
   }
 
+  function crearComboProducto(inputId, panelId, onSelectExtra){
+  const input = document.getElementById(inputId);
+  const panel = document.getElementById(panelId);
+  if(!input || !panel) return;
+
+  let activeIndex = -1;
+
+  function filtrar(){
+    const q = norm(input.value);
+    const lista = [...new Set(PRODUCTOS)]
+      .sort((a,b)=>a.localeCompare(b,"es",{sensitivity:"base"}))
+      .filter(p => !q || norm(p).includes(q))
+      .slice(0,18);
+
+    activeIndex = -1;
+
+    if(!lista.length){
+      panel.innerHTML = `<div class="comboEmpty">Sin resultados</div>`;
+    }else{
+      panel.innerHTML = lista.map((p,i)=>`
+        <div class="comboItem" data-index="${i}" data-value="${escapeHtml(p)}">
+          ${escapeHtml(p)}
+        </div>
+      `).join("");
+    }
+
+    panel.classList.add("open");
+  }
+
+  function seleccionar(valor){
+    input.value = valor;
+    panel.classList.remove("open");
+    activeIndex = -1;
+
+    if(typeof onSelectExtra === "function"){
+      onSelectExtra(valor);
+    }
+  }
+
+  input.addEventListener("focus", filtrar);
+  input.addEventListener("input", filtrar);
+
+  input.addEventListener("keydown", e=>{
+    const items = [...panel.querySelectorAll(".comboItem")];
+
+    if(e.key === "ArrowDown"){
+      e.preventDefault();
+      if(!panel.classList.contains("open")) filtrar();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    }
+
+    if(e.key === "ArrowUp"){
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    }
+
+    if(e.key === "Enter"){
+      if(panel.classList.contains("open") && activeIndex >= 0 && items[activeIndex]){
+        e.preventDefault();
+        seleccionar(items[activeIndex].dataset.value);
+        return;
+      }
+    }
+
+    if(e.key === "Escape"){
+      panel.classList.remove("open");
+    }
+
+    items.forEach((el,i)=>{
+      el.classList.toggle("active", i === activeIndex);
+    });
+  });
+
+  panel.addEventListener("mousedown", e=>{
+    const item = e.target.closest(".comboItem");
+    if(!item) return;
+    seleccionar(item.dataset.value);
+  });
+
+  document.addEventListener("mousedown", e=>{
+    if(!input.closest(".comboBoxVDC")?.contains(e.target)){
+      panel.classList.remove("open");
+    }
+  });
+}
+
   document.getElementById("fecha").value = todayISODate();
   llenarDatalist('listaProductos');
   llenarDatalist('listaProductosDevueltos');
+  crearComboProducto("producto", "comboProducto", ()=>{
+  aplicarAutofillPorProducto();
+});
+
+crearComboProducto("productoDevuelto", "comboProductoDevuelto");
   markTouched();
 
   $('#producto').addEventListener('input', aplicarAutofillPorProducto);
