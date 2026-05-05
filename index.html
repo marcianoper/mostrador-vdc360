@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Registro Mostrador — VDC 360°</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/fundamental-styles@latest/dist/fundamental-styles.css">
   <style>
     :root{
       --brand:#0a7a3b;
@@ -320,6 +321,296 @@
       .brand{ min-width:unset; }
       table{ min-width:720px; }
     }
+    /* ===== SAP / FIORI LAYER — VDC 360° ===== */
+
+.sap-toolbar{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.sap-panel{
+  border-radius:18px;
+  border:1px solid #d9d9d9;
+}
+
+.sap-form-grid{
+  display:grid;
+  gap:12px;
+}
+
+.sap-form-item label,
+.fd-form-label{
+  font-weight:800;
+}
+
+.fd-input,
+.fd-select__control,
+.fd-textarea{
+  border-radius:8px;
+  font-weight:700;
+}
+
+.fd-button{
+  font-weight:800;
+  border-radius:8px;
+}
+
+.fd-object-status{
+  font-weight:800;
+}
+
+.fd-card{
+  border-radius:18px;
+  box-shadow:0 8px 24px rgba(15,23,42,.08);
+}
+    /* Ajuste visual VDC + SAP */
+.fd-button{
+  min-height:40px;
+  border-radius:12px !important;
+  font-weight:900 !important;
+  padding:10px 14px !important;
+  box-shadow:0 8px 18px rgba(2,6,23,.08);
+}
+
+.fd-button--emphasized{
+  background:linear-gradient(135deg,var(--brand),var(--brand2)) !important;
+  color:#fff !important;
+  border:0 !important;
+}
+
+.fd-button--positive{
+  background:#0a7a3b !important;
+  color:#fff !important;
+  border:0 !important;
+}
+
+.fd-button--attention{
+  background:#111827 !important;
+  color:#fff !important;
+  border:0 !important;
+}
+
+.fd-button--transparent{
+  background:#fff !important;
+  color:#111827 !important;
+  border:1px solid rgba(15,23,42,.18) !important;
+}
+
+.fd-button:hover{
+  filter:brightness(1.03);
+  transform:translateY(-1px);
+}
+
+.pesoBox .fd-button{
+  width:auto !important;
+  min-width:unset !important;
+}
+
+.barRight .fd-button{
+  text-decoration:none;
+}
+    /* ===== SAP Pattern: Combobox VDC ===== */
+
+.comboBoxVDC{
+  position:relative;
+}
+
+.comboBoxVDC .fd-input{
+  padding-right:42px !important;
+}
+
+.comboIcon{
+  position:absolute;
+  right:12px;
+  top:39px;
+  font-size:14px;
+  color:#64748b;
+  pointer-events:none;
+}
+
+.comboPanel{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  background:#fff;
+  border:1px solid rgba(15,23,42,.12);
+  border-radius:14px;
+  box-shadow:0 18px 40px rgba(15,23,42,.16);
+  z-index:100;
+  max-height:260px;
+  overflow:auto;
+  display:none;
+}
+
+.comboPanel.open{
+  display:block;
+}
+
+.comboItem{
+  padding:11px 14px;
+  font-weight:850;
+  cursor:pointer;
+  border-bottom:1px solid #eef2f7;
+}
+
+.comboItem:hover,
+.comboItem.active{
+  background:#eaf7ef;
+  color:#0a7a3b;
+}
+
+.comboEmpty{
+  padding:12px 14px;
+  color:#64748b;
+  font-weight:800;
+}
+    /* ===== CONTRASTE COMBOBOX VDC ===== */
+
+.comboBoxVDC{
+  position:relative;
+}
+
+/* INPUT */
+.comboBoxVDC .fd-input{
+  background:#ffffff !important;
+  border:2px solid #cbd5e1 !important;
+  box-shadow:0 4px 10px rgba(0,0,0,.05);
+  transition:all .15s ease;
+}
+
+/* HOVER */
+.comboBoxVDC .fd-input:hover{
+  border-color:#94a3b8 !important;
+}
+
+/* FOCUS */
+.comboBoxVDC .fd-input:focus{
+  border-color:var(--brand) !important;
+  box-shadow:0 0 0 4px rgba(10,122,59,.15), 0 6px 14px rgba(0,0,0,.08);
+}
+
+/* ICONO */
+.comboIcon{
+  position:absolute;
+  right:12px;
+  top:40px;
+  font-size:14px;
+  color:#475569;
+  font-weight:900;
+}
+
+/* PANEL DROPDOWN */
+.comboPanel{
+  position:absolute;
+  left:0;
+  right:0;
+  top:calc(100% + 6px);
+  background:#ffffff;
+  border:2px solid #cbd5e1;
+  border-radius:14px;
+  box-shadow:0 20px 45px rgba(0,0,0,.18);
+  z-index:100;
+  max-height:260px;
+  overflow:auto;
+  display:none;
+}
+
+/* CUANDO ABRE */
+.comboPanel.open{
+  display:block;
+  animation:fadeIn .12s ease;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(-4px);}
+  to{opacity:1; transform:translateY(0);}
+}
+
+/* ITEMS */
+.comboItem{
+  padding:12px 14px;
+  font-weight:900;
+  cursor:pointer;
+  border-bottom:1px solid #eef2f7;
+  color:#0f172a;
+}
+
+/* HOVER */
+.comboItem:hover{
+  background:#eaf7ef;
+  color:#0a7a3b;
+}
+
+/* ACTIVO (teclado) */
+.comboItem.active{
+  background:#0a7a3b;
+  color:#fff;
+}
+
+/* SIN RESULTADOS */
+.comboEmpty{
+  padding:12px 14px;
+  color:#64748b;
+  font-weight:800;
+}
+    /* ===== COMBOBOX MÁS GRANDE (VDC PRO) ===== */
+
+.comboBoxVDC .fd-input{
+  height:48px !important;        /* MÁS ALTURA */
+  font-size:14px;
+  padding:12px 14px !important;
+  border-radius:14px !important;
+
+  /* MÁS CUERPO */
+  border:2px solid #cbd5e1 !important;
+  background:#ffffff !important;
+
+  /* SOMBRA MÁS VISIBLE */
+  box-shadow:0 6px 16px rgba(0,0,0,.08);
+
+  font-weight:900;
+}
+
+/* HOVER MÁS CLARO */
+.comboBoxVDC .fd-input:hover{
+  border-color:#94a3b8 !important;
+  box-shadow:0 8px 20px rgba(0,0,0,.10);
+}
+
+/* FOCUS MÁS PRO */
+.comboBoxVDC .fd-input:focus{
+  border-color:var(--brand) !important;
+  box-shadow:
+    0 0 0 4px rgba(10,122,59,.15),
+    0 10px 24px rgba(0,0,0,.12);
+}
+
+/* ICONO MÁS CENTRADO */
+.comboIcon{
+  top:50% !important;
+  transform:translateY(-50%);
+  right:14px;
+  font-size:16px;
+}
+
+/* PANEL MÁS GRANDE */
+.comboPanel{
+  border-radius:16px;
+  margin-top:4px;
+}
+
+/* ITEMS MÁS ALTOS */
+.comboItem{
+  padding:14px 16px;
+  font-size:14px;
+}
+
+    /* ===== DATE PICKER VDC / SAP STYLE ===== */
+
+
   </style>
 </head>
 
@@ -337,7 +628,9 @@
       </div>
 
       <div class="barRight">
-        <a class="btnLink" href="https://marcianoper.github.io/vdc-central/">← VDC Central</a>
+        <a class="fd-button fd-button--transparent" href="https://marcianoper.github.io/vdc-central/">
+  ← VDC Central
+</a>
         <span id="rt" class="pill ok">REAL TIME</span>
       </div>
     </div>
@@ -357,26 +650,29 @@
       </div>
 
       <div class="form">
-        <label>Fecha
-          <input type="date" id="fecha" value="">
-          <div class="hint">Tip: si cambias la fecha, el sistema carga todo ese día y re-conecta el realtime.</div>
-        </label>
-
-        <label>Producto
-          <input
-            type="text"
-            id="producto"
-            list="listaProductos"
-            placeholder="Escribe para buscar producto..."
-            autocomplete="off"
-          />
-        </label>
+    <label>Fecha
+  <input type="date" id="fecha" value="">
+  <div class="hint">Tip: si cambias la fecha, el sistema carga todo ese día y re-conecta el realtime.</div>
+</label>
+<label class="comboBoxVDC">Producto
+  <input
+    class="fd-input"
+    type="text"
+    id="producto"
+    placeholder="Escribe para buscar producto..."
+    autocomplete="off"
+  />
+  <span class="comboIcon">⌄</span>
+  <div id="comboProducto" class="comboPanel"></div>
+</label>
 
         <div class="row2">
           <label>Kilos
             <input type="number" id="kilos" step="0.01" />
             <div class="pesoBox">
-              <button id="btnPeso" type="button" class="pesoBtn">📥 Tomar peso</button>
+             <button id="btnPeso" type="button" class="fd-button fd-button--transparent">
+  📥 Tomar peso
+</button>
               <span class="pesoToggle">
                 <input type="checkbox" id="rtPesoToggle" />
                 <span>Peso Real-time</span>
@@ -401,7 +697,9 @@
           </select>
         </label>
 
-        <button id="btnAgregar" class="btn">➕ Agregar producto</button>
+       <button id="btnAgregar" class="fd-button fd-button--emphasized">
+  ➕ Agregar producto
+</button>
       </div>
     </section>
 
@@ -414,22 +712,29 @@
       </div>
 
       <div class="form">
-        <label>Producto devuelto
-          <input
-            type="text"
-            id="productoDevuelto"
-            list="listaProductosDevueltos"
-            placeholder="Escribe para buscar producto..."
-            autocomplete="off"
-          />
-        </label>
+       <label class="comboBoxVDC">Producto devuelto
+  <input
+    class="fd-input"
+    type="text"
+    id="productoDevuelto"
+    placeholder="Escribe para buscar producto..."
+    autocomplete="off"
+  />
+  <span class="comboIcon">⌄</span>
+  <div id="comboProductoDevuelto" class="comboPanel"></div>
+</label>
 
         <label>Kilos devueltos
           <input type="number" id="kilosDevuelto" step="0.01" />
         </label>
 
-        <button id="btnAgregarDev" class="btn dark">↩️ Agregar devuelto</button>
-        <button onclick="enviarWhatsApp()" class="btn">📲 Enviar resumen a WhatsApp</button>
+       <button id="btnAgregarDev" class="fd-button fd-button--attention">
+  ↩️ Agregar devuelto
+</button>
+
+<button onclick="enviarWhatsApp()" class="fd-button fd-button--positive">
+  📲 Enviar resumen a WhatsApp
+</button>
 
         <div class="hint">Tip: puedes abrir esta página en una tablet y dejarla fija todo el día.</div>
       </div>
@@ -617,6 +922,8 @@
       .replace(/[\u0300-\u036f]/g, "")
       .replace(/\s+/g, " ");
   }
+
+  
 
   function canonProducto(nombre){
     const limpio = String(nombre || "").trim();
@@ -1576,9 +1883,100 @@
     });
   }
 
+  function crearComboProducto(inputId, panelId, onSelectExtra){
+  const input = document.getElementById(inputId);
+  const panel = document.getElementById(panelId);
+  if(!input || !panel) return;
+
+  let activeIndex = -1;
+
+  function filtrar(){
+    const q = norm(input.value);
+    const lista = [...new Set(PRODUCTOS)]
+      .sort((a,b)=>a.localeCompare(b,"es",{sensitivity:"base"}))
+      .filter(p => !q || norm(p).includes(q))
+      .slice(0,18);
+
+    activeIndex = -1;
+
+    if(!lista.length){
+      panel.innerHTML = `<div class="comboEmpty">Sin resultados</div>`;
+    }else{
+      panel.innerHTML = lista.map((p,i)=>`
+        <div class="comboItem" data-index="${i}" data-value="${escapeHtml(p)}">
+          ${escapeHtml(p)}
+        </div>
+      `).join("");
+    }
+
+    panel.classList.add("open");
+  }
+
+  function seleccionar(valor){
+    input.value = valor;
+    panel.classList.remove("open");
+    activeIndex = -1;
+
+    if(typeof onSelectExtra === "function"){
+      onSelectExtra(valor);
+    }
+  }
+
+  input.addEventListener("focus", filtrar);
+  input.addEventListener("input", filtrar);
+
+  input.addEventListener("keydown", e=>{
+    const items = [...panel.querySelectorAll(".comboItem")];
+
+    if(e.key === "ArrowDown"){
+      e.preventDefault();
+      if(!panel.classList.contains("open")) filtrar();
+      activeIndex = Math.min(activeIndex + 1, items.length - 1);
+    }
+
+    if(e.key === "ArrowUp"){
+      e.preventDefault();
+      activeIndex = Math.max(activeIndex - 1, 0);
+    }
+
+    if(e.key === "Enter"){
+      if(panel.classList.contains("open") && activeIndex >= 0 && items[activeIndex]){
+        e.preventDefault();
+        seleccionar(items[activeIndex].dataset.value);
+        return;
+      }
+    }
+
+    if(e.key === "Escape"){
+      panel.classList.remove("open");
+    }
+
+    items.forEach((el,i)=>{
+      el.classList.toggle("active", i === activeIndex);
+    });
+  });
+
+  panel.addEventListener("mousedown", e=>{
+    const item = e.target.closest(".comboItem");
+    if(!item) return;
+    seleccionar(item.dataset.value);
+  });
+
+  document.addEventListener("mousedown", e=>{
+    if(!input.closest(".comboBoxVDC")?.contains(e.target)){
+      panel.classList.remove("open");
+    }
+  });
+}
+
   document.getElementById("fecha").value = todayISODate();
   llenarDatalist('listaProductos');
   llenarDatalist('listaProductosDevueltos');
+  crearComboProducto("producto", "comboProducto", ()=>{
+  aplicarAutofillPorProducto();
+});
+
+crearComboProducto("productoDevuelto", "comboProductoDevuelto");
   markTouched();
 
   $('#producto').addEventListener('input', aplicarAutofillPorProducto);
