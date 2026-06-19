@@ -622,7 +622,7 @@
       <div class="brand">
         <div class="logo">VDC</div>
         <div class="title">
-          <b>Registro Mostrador — VDC 360°</b>
+          <b>Registro Mostrado — VDC 360°</b>
           <span>Captura + Realtime + Resumen del día</span>
         </div>
       </div>
@@ -811,6 +811,47 @@
     </div>
   </section>
 
+
+  <section class="card tableCard">
+    <div class="tableTop">
+      <p class="sub">Resumen mensual de mostrador (neto real)
+        <small>Compara kilos enviados contra kilos devueltos por producto en todo el mes.</small>
+      </p>
+      <div class="sap-toolbar">
+        <label style="margin:0;font-size:12px;font-weight:1000;min-width:170px;">Mes
+          <input type="month" id="mesResumen" />
+        </label>
+        <button id="btnResumenMes" type="button" class="fd-button fd-button--emphasized">📊 Ver mes</button>
+        <button id="btnCSVResumenMes" type="button" class="fd-button fd-button--transparent">⬇️ CSV</button>
+        <button id="btnWAResumenMes" type="button" class="fd-button fd-button--positive">📲 WhatsApp</button>
+      </div>
+    </div>
+
+    <div class="grid" style="grid-template-columns:repeat(4,minmax(0,1fr));margin-bottom:12px;">
+      <div class="pill ok">Enviados: <span id="mesTotalEnviado">0.00 kg</span></div>
+      <div class="pill bad">Devueltos: <span id="mesTotalDevuelto">0.00 kg</span></div>
+      <div class="pill ok">Neto real: <span id="mesTotalNeto">0.00 kg</span></div>
+      <div class="pill">Productos: <span id="mesProductos">0</span></div>
+    </div>
+
+    <div class="tableWrap">
+      <table id="tablaResumenMes">
+        <thead>
+          <tr>
+            <th>Producto</th>
+            <th>Kilos enviados</th>
+            <th>Kilos devueltos</th>
+            <th>Neto real</th>
+            <th>Piezas enviadas</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+
+    <div class="hint" id="mesResumenStatus">Selecciona un mes para ver el resumen.</div>
+  </section>
+
   <footer>VDC 360° · Mostrador · Marciano mode ✅</footer>
 </main>
 
@@ -862,6 +903,7 @@
     "Tripa",
     "Tripa de Rastro",
     "Tripa de rastro",
+     "Creadillas",
     "Tripa Gorda"
   ];
 
@@ -880,6 +922,7 @@
     "Corazon": "CORAZON",
     "Higado": "HIGADO",
     "Sebo": "SEBO",
+    "Creadillas": "CREADILLAS",
     "Pata Blanca": "PATA_BLANCA",
     "Pata Morena": "PATA_MORENA",
     "Cabeza sin lengua": "CABEZA_SIN_LENGUA",
@@ -1087,7 +1130,7 @@
   }
 
   const PRODUCTOS_VIAJE = new Set([
-    "bofe","cabeza de res","cabeza de rastro","cabeza sin lengua","corazon",
+    "bofe", "creadillas","cabeza de res","cabeza de rastro","cabeza sin lengua","corazon",
     "higado","libro","nana","panza","pata blanca","pata morena","cuajo",
     "quajo","sebo","teleco","tripa","tripa de rastro","tripa gorda"
   ].map(norm));
@@ -1098,6 +1141,7 @@
     [norm("Caja Menudo National"), { origen: "Congelado", congelado: "Sí" }],
     [norm("Caja Menudo National X KG"), { origen: "Congelado", congelado: "Sí" }],
     [norm("Caja Washington"), { origen: "Daniel", congelado: "Sí" }],
+    [norm("Caja Excel"), { origen: "Congelado", congelado: "Sí" }],
     [norm("Lengua"), { origen: "Anglo", congelado: "Sí" }]
   ]);
 
@@ -1105,6 +1149,7 @@
     norm("Menudo Canadian"),
     norm("Caja Menudo Canadian X KG"),
     norm("Caja Menudo National"),
+    norm("Caja Excel"),
     norm("Caja Menudo National X KG")
   ]);
 
@@ -1811,6 +1856,155 @@
     }
   }
 
+
+  let resumenMesRows = [];
+
+  function currentMonthValue(){
+    return todayISODate().slice(0,7);
+  }
+
+  function monthRange(monthValue){
+    const m = String(monthValue || currentMonthValue());
+    const [y, mo] = m.split('-').map(Number);
+    const start = `${y}-${String(mo).padStart(2,'0')}-01`;
+    const endDate = new Date(y, mo, 0);
+    const end = `${endDate.getFullYear()}-${String(endDate.getMonth()+1).padStart(2,'0')}-${String(endDate.getDate()).padStart(2,'0')}`;
+    return { start, end, label:m };
+  }
+
+  function setMesStatus(msg, ok=true){
+    const el = $('#mesResumenStatus');
+    if(!el) return;
+    el.textContent = msg || '';
+    el.style.color = ok ? 'var(--muted)' : 'var(--danger)';
+  }
+
+  async function cargarResumenMes(){
+    if(!sb){ alert('No cargó Supabase.'); return; }
+
+    const mes = $('#mesResumen')?.value || currentMonthValue();
+    const { start, end, label } = monthRange(mes);
+    setMesStatus(`Cargando resumen de ${start} a ${end}…`, true);
+
+    const [envResp, devResp] = await Promise.all([
+      sb.from(T_ENVIADOS)
+        .select('producto,kilos,piezas,fecha')
+        .gte('fecha', start)
+        .lte('fecha', end),
+      sb.from(T_DEVUELTOS)
+        .select('producto,kilos,fecha')
+        .gte('fecha', start)
+        .lte('fecha', end)
+    ]);
+
+    if(envResp.error){
+      console.error(envResp.error);
+      setMesStatus('Error cargando enviados del mes.', false);
+      return;
+    }
+    if(devResp.error){
+      console.error(devResp.error);
+      setMesStatus('Error cargando devueltos del mes.', false);
+      return;
+    }
+
+    const map = new Map();
+    function ensure(producto){
+      const p = canonProducto(producto || 'Sin producto');
+      if(!map.has(p)) map.set(p, { producto:p, enviados:0, devueltos:0, neto:0, piezas:0 });
+      return map.get(p);
+    }
+
+    (envResp.data || []).forEach(r => {
+      const row = ensure(r.producto);
+      row.enviados += num(r.kilos);
+      row.piezas += parseInt(r.piezas || 0, 10) || 0;
+    });
+
+    (devResp.data || []).forEach(r => {
+      const row = ensure(r.producto);
+      row.devueltos += num(r.kilos);
+    });
+
+    resumenMesRows = Array.from(map.values()).map(r => ({
+      ...r,
+      neto: r.enviados - r.devueltos
+    })).sort((a,b)=> b.neto - a.neto);
+
+    renderResumenMes(label);
+  }
+
+  function renderResumenMes(label){
+    const tbody = document.querySelector('#tablaResumenMes tbody');
+    if(!tbody) return;
+
+    tbody.innerHTML = resumenMesRows.map(r => `
+      <tr>
+        <td>${escapeHtml(r.producto)}</td>
+        <td>${r.enviados.toFixed(2)}</td>
+        <td>${r.devueltos.toFixed(2)}</td>
+        <td><b>${r.neto.toFixed(2)}</b></td>
+        <td>${r.piezas}</td>
+      </tr>
+    `).join('');
+
+    const totalEnv = resumenMesRows.reduce((a,b)=>a + b.enviados, 0);
+    const totalDev = resumenMesRows.reduce((a,b)=>a + b.devueltos, 0);
+    const totalNeto = resumenMesRows.reduce((a,b)=>a + b.neto, 0);
+
+    const e = $('#mesTotalEnviado'); if(e) e.textContent = `${totalEnv.toFixed(2)} kg`;
+    const d = $('#mesTotalDevuelto'); if(d) d.textContent = `${totalDev.toFixed(2)} kg`;
+    const n = $('#mesTotalNeto'); if(n) n.textContent = `${totalNeto.toFixed(2)} kg`;
+    const p = $('#mesProductos'); if(p) p.textContent = resumenMesRows.filter(x => Math.abs(x.neto) > 0.0001 || x.enviados > 0 || x.devueltos > 0).length;
+
+    setMesStatus(resumenMesRows.length ? `Resumen mensual cargado: ${label}.` : `Sin movimientos en ${label}.`, true);
+  }
+
+  function descargarResumenMesCSV(){
+    if(!resumenMesRows.length){ alert('Primero carga un mes con datos.'); return; }
+    const mes = $('#mesResumen')?.value || currentMonthValue();
+    const header = ['Producto','Kilos enviados','Kilos devueltos','Neto real','Piezas enviadas'];
+    const lines = [header.join(',')].concat(resumenMesRows.map(r => [
+      `"${String(r.producto).replaceAll('"','""')}"`,
+      r.enviados.toFixed(2),
+      r.devueltos.toFixed(2),
+      r.neto.toFixed(2),
+      r.piezas
+    ].join(',')));
+
+    const blob = new Blob([lines.join('
+')], { type:'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `resumen_mostrador_${mes}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  function enviarResumenMesWhatsApp(){
+    if(!resumenMesRows.length){ alert('Primero carga un mes con datos.'); return; }
+    const mes = $('#mesResumen')?.value || currentMonthValue();
+    const totalEnv = resumenMesRows.reduce((a,b)=>a + b.enviados, 0);
+    const totalDev = resumenMesRows.reduce((a,b)=>a + b.devueltos, 0);
+    const totalNeto = resumenMesRows.reduce((a,b)=>a + b.neto, 0);
+
+    let mensaje = `*Resumen mensual Mostrador VDC 360° - ${mes}*\n\n`;
+    mensaje += `🟢 Enviados: ${totalEnv.toFixed(2)} kg\n`;
+    mensaje += `🔴 Devueltos: ${totalDev.toFixed(2)} kg\n`;
+    mensaje += `✅ Neto real: ${totalNeto.toFixed(2)} kg\n\n`;
+    mensaje += `*Por producto:*\n`;
+
+    resumenMesRows.forEach(r => {
+      mensaje += `• ${r.producto}: ${r.neto.toFixed(2)} kg netos`;
+      mensaje += ` (${r.enviados.toFixed(2)} env / ${r.devueltos.toFixed(2)} dev / ${r.piezas} pzas)\n`;
+    });
+
+    window.open(`https://wa.me/?text=${encodeURIComponent(mensaje)}`, '_blank');
+  }
+
   function enviarWhatsApp(){
     const fecha = fechaSeleccionada();
     const agrupadoEnviados = {};
@@ -1970,6 +2164,9 @@
 }
 
   document.getElementById("fecha").value = todayISODate();
+  if(document.getElementById("mesResumen")){
+    document.getElementById("mesResumen").value = currentMonthValue();
+  }
   llenarDatalist('listaProductos');
   llenarDatalist('listaProductosDevueltos');
   crearComboProducto("producto", "comboProducto", ()=>{
@@ -2014,6 +2211,14 @@ crearComboProducto("productoDevuelto", "comboProductoDevuelto");
     await conectarRealtime(f);
   });
 
+
+  $('#btnResumenMes')?.addEventListener('click', cargarResumenMes);
+  $('#btnCSVResumenMes')?.addEventListener('click', descargarResumenMesCSV);
+  $('#btnWAResumenMes')?.addEventListener('click', enviarResumenMesWhatsApp);
+  $('#mesResumen')?.addEventListener('change', cargarResumenMes);
+
+  cargarResumenMes();
+
   iniciar();
 
   window.startEdit = startEdit;
@@ -2023,6 +2228,9 @@ crearComboProducto("productoDevuelto", "comboProductoDevuelto");
   window.eliminarProducto = eliminarProducto;
   window.eliminarDevuelto = eliminarDevuelto;
   window.enviarWhatsApp = enviarWhatsApp;
+  window.cargarResumenMes = cargarResumenMes;
+  window.descargarResumenMesCSV = descargarResumenMesCSV;
+  window.enviarResumenMesWhatsApp = enviarResumenMesWhatsApp;
 </script>
 
 </body>
